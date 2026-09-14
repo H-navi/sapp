@@ -64,3 +64,64 @@ export const systemSettingInputSchema = z.object({
   key: z.string().min(1).max(100),
   value: z.unknown(),
 })
+
+export const ruleCreateSchema = z.object({
+  ruleCode: z.string().trim().min(2).max(60),
+  ruleType: z.enum([
+    'MAX_DAYS_PER_REQUEST',
+    'MIN_DAYS_PER_REQUEST',
+    'MAX_DAYS_PER_PERIOD',
+    'MAX_REQUESTS_PER_PERIOD',
+    'NO_CONSECUTIVE_DAYS',
+    'ALLOWED_WEEKDAYS',
+    'MIN_NOTICE_DAYS',
+    'MAX_BACKDATE_DAYS',
+    'QUOTA_SUFFICIENT',
+    'ATTACHMENT_REQUIRED',
+    'ATTACHMENT_REQUIRED_IF_DAYS_GTE',
+    'GENDER_RESTRICTION',
+    'MIN_EMPLOYMENT_MONTHS',
+    'EMPLOYMENT_STATUS_ALLOWED',
+    'ONCE_PER_EMPLOYMENT',
+    'MAX_PER_YEAR',
+    'NO_OVERLAP_REQUEST',
+    'BLACKOUT_PERIOD',
+    'MAX_CONCURRENT_TEAM_ON_LEAVE',
+    'CUSTOM_EXPRESSION',
+  ]),
+  params: z.record(z.any()).default({}),
+  violationAction: z.enum(['BLOCK_SUBMIT', 'AUTO_REJECT', 'REQUIRE_APPROVAL', 'WARN_ONLY']).default('BLOCK_SUBMIT'),
+  messageTemplate: z.string().trim().min(5),
+  evaluationOrder: z.coerce.number().int().min(1).max(999).default(100),
+  isActive: z.boolean().default(true),
+})
+
+export const ruleUpdateSchema = z.object({
+  ruleCode: z.string().trim().min(2).max(60).optional(),
+  params: z.record(z.any()).optional(),
+  violationAction: z.enum(['BLOCK_SUBMIT', 'AUTO_REJECT', 'REQUIRE_APPROVAL', 'WARN_ONLY']).optional(),
+  messageTemplate: z.string().trim().min(5).optional(),
+  evaluationOrder: z.coerce.number().int().min(1).max(999).optional(),
+  isActive: z.boolean().optional(),
+})
+
+export const policyNewVersionSchema = z.object({
+  name: z.string().trim().min(2).max(150).optional(),
+  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD wajib valid'),
+  overallDeadlineHours: z.coerce.number().positive().optional(),
+  deadlineUsesWorkingHours: z.boolean().optional(),
+  onDeadlineAction: z
+    .enum(['AUTO_APPROVE', 'AUTO_REJECT', 'ESCALATE_NEXT_STEP', 'ESCALATE_TO_STEP', 'NOTIFY_ADMIN_ONLY', 'KEEP_WAITING'])
+    .optional(),
+  autoDecisionRequiresRulePass: z.boolean().optional(),
+  notes: z.string().optional().nullable(),
+})
+
+export const policyTestDryRunSchema = z.object({
+  employeeId: z.string().uuid(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startDayPart: z.enum(['FULL_DAY', 'MORNING', 'AFTERNOON']).default('FULL_DAY'),
+  endDayPart: z.enum(['FULL_DAY', 'MORNING', 'AFTERNOON']).default('FULL_DAY'),
+  attachmentCount: z.coerce.number().int().min(0).default(0),
+})

@@ -85,7 +85,7 @@ Buka peramban di [http://localhost:3000](http://localhost:3000).
 
 Semua akun bawaan di bawah ini memiliki **kata sandi awal yang sama**:
 
-> 🔑 **Password Default:** `Password123!`
+> 🔑 **Password Default:** `Password123!` (Khusus akun `admin`: `Password1234!`)
 
 *(Semua akun bawaan memiliki flag `must_change_password = true`, sehingga pada login pertama Anda akan diminta membuat password baru sebelum masuk ke sistem).*
 
