@@ -5,7 +5,8 @@ export function useAuth() {
 
   async function fetchMe() {
     try {
-      const { data } = await $fetch<{ data: AuthContext | null }>('/api/auth/me')
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      const { data } = await $fetch<{ data: AuthContext | null }>('/api/auth/me', { headers })
       user.value = data
       return data
     } catch {
