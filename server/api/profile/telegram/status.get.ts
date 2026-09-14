@@ -1,10 +1,16 @@
 import { sql } from 'drizzle-orm'
 import { requireAuth } from '~~/server/utils/guard'
 import { useDatabase } from '~~/server/database'
+import { processTelegramUpdates } from '~~/server/plugins/telegram-bot'
 
 export default defineEventHandler(async (event) => {
   const auth = requireAuth(event)
   const db = useDatabase()
+
+  // Tarik update Telegram terbaru secara on-demand saat frontend polling status
+  try {
+    await processTelegramUpdates()
+  } catch {}
 
   const rows = (await db.execute(sql`
     SELECT COALESCE(e.telegram_chat_id, u.telegram_chat_id) AS telegram_chat_id

@@ -6,20 +6,27 @@ export interface TelegramTokenData {
   expiresAt: number
 }
 
-// In-memory token store untuk penautan Telegram (berlaku 15 menit)
-const linkingStore = new Map<string, TelegramTokenData>()
+// Global in-memory token store untuk penautan Telegram (tahan terhadap HMR reload, berlaku 15 menit)
+const getLinkingStore = (): Map<string, TelegramTokenData> => {
+  const g = globalThis as any
+  if (!g.__telegramLinkingStore) {
+    g.__telegramLinkingStore = new Map<string, TelegramTokenData>()
+  }
+  return g.__telegramLinkingStore
+}
 
 export function createTelegramLinkingToken(userId: string, employeeId?: string | null): string {
   const token = randomBytes(12).toString('hex')
   const expiresAt = Date.now() + 15 * 60 * 1000 // 15 menit
+  const store = getLinkingStore()
 
-  linkingStore.set(token, { userId, employeeId, expiresAt })
+  store.set(token, { userId, employeeId, expiresAt })
 
   // Bersihkan token yang sudah lewat waktu kadaluarsa
   const now = Date.now()
-  for (const [k, v] of linkingStore.entries()) {
+  for (const [k, v] of store.entries()) {
     if (v.expiresAt < now) {
-      linkingStore.delete(k)
+      store.delete(k)
     }
   }
 
@@ -27,16 +34,17 @@ export function createTelegramLinkingToken(userId: string, employeeId?: string |
 }
 
 export function verifyTelegramLinkingToken(token: string): { userId: string; employeeId?: string | null } | null {
-  const data = linkingStore.get(token)
+  const store = getLinkingStore()
+  const data = store.get(token)
   if (!data) return null
 
   if (data.expiresAt < Date.now()) {
-    linkingStore.delete(token)
+    store.delete(token)
     return null
   }
 
   // Token sekali pakai: hapus setelah diverifikasi
-  linkingStore.delete(token)
+  store.delete(token)
   return {
     userId: data.userId,
     employeeId: data.employeeId,
