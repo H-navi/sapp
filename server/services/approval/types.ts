@@ -46,6 +46,7 @@ export interface WorkflowStepSnapshot {
   reminderEnabled: boolean
   reminderIntervalMinutes: number
   reminderMaxCount: number
+  reminderOnlyWorkingHours?: boolean
   reminderChannels: string[]
   escalationAction: string
   escalateToStepOrder?: number | null

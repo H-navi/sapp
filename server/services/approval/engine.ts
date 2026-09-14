@@ -6,7 +6,7 @@ import type { RequestContext, TaskActionResult, WorkflowStepSnapshot } from './t
 import { ambilRequestContext, matchWorkflow } from './workflow-matcher'
 import { resolveApprovers } from './approver-resolver'
 import { finalizeRequest } from './decision'
-import { addWorkingHours } from '../../utils/calendar'
+import { loadWorkingCalendar, addWorkingHours, isWithinWorkingHours, nextWorkingMoment } from '../../utils/working-time'
 
 /**
  * Memulai alur persetujuan saat pengajuan disubmit.
@@ -94,16 +94,21 @@ export async function activateStep(
 
   // Hitung batas SLA (due_at)
   const now = new Date()
+  const cal = await loadWorkingCalendar()
   let dueAt: Date
   if (step.slaUsesWorkingHours) {
-    dueAt = addWorkingHours(now, step.slaHours)
+    dueAt = addWorkingHours(now, step.slaHours, cal)
   } else {
     dueAt = dayjs(now).add(step.slaHours, 'hour').toDate()
   }
 
   let nextReminderAt: Date | null = null
   if (step.reminderEnabled && step.reminderIntervalMinutes > 0) {
-    nextReminderAt = dayjs(now).add(step.reminderIntervalMinutes, 'minute').toDate()
+    let nextRem = dayjs(now).add(step.reminderIntervalMinutes, 'minute').toDate()
+    if (step.reminderOnlyWorkingHours && !isWithinWorkingHours(nextRem, cal)) {
+      nextRem = nextWorkingMoment(nextRem, cal)
+    }
+    nextReminderAt = nextRem
   }
 
   // Perbarui task menjadi PENDING

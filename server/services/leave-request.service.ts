@@ -8,7 +8,9 @@ import type { Transaction } from '../database'
 import { withTransaction } from '../utils/transaction'
 import { writeAuditLog } from '../utils/audit'
 import type { AuthContext } from '../utils/auth'
-import { expandLeaveDays, summarizeDays, addWorkingHours } from '../utils/calendar'
+import dayjs from 'dayjs'
+import { expandLeaveDays, summarizeDays } from '../utils/calendar'
+import { loadWorkingCalendar, addWorkingHours } from '../utils/working-time'
 import { getAllowedLeaveTypes } from './eligibility.service'
 import { evaluateRules } from './rule-engine.service'
 import { startApprovalFlow } from './approval-engine.service'
@@ -484,8 +486,11 @@ async function executeSubmitRequest(tx: Transaction, requestId: string, actor: A
   }
 
   // 8. Hitung final deadline
+  const cal = await loadWorkingCalendar()
   const overallHours = policy?.overallDeadlineHours ? Number(policy.overallDeadlineHours) : 24
-  const finalDeadlineAt = addWorkingHours(new Date(), overallHours)
+  const finalDeadlineAt = (policy?.deadlineUsesWorkingHours ?? true)
+    ? addWorkingHours(new Date(), overallHours, cal)
+    : dayjs(new Date()).add(overallHours, 'hour').toDate()
 
   // 9. Update status pengajuan ke SUBMITTED
   const [submittedReq] = await tx

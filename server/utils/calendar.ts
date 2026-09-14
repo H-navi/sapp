@@ -78,25 +78,3 @@ export function summarizeDays(days: LeaveDay[], workingDaysOnly: boolean) {
     totalDays,
   }
 }
-
-/**
- * Tambahkan jam kerja untuk menghitung final_deadline_at.
- * Asumsi bawaan 8 jam kerja per hari kerja.
- */
-export function addWorkingHours(from: Date, hours: number): Date {
-  // Hitung perkiraan hari kerja yang dibutuhkan (1 hari = 8 jam kerja)
-  const workDaysNeeded = Math.ceil(hours / 8)
-  const result = dayjs(from).tz(APP_TZ)
-  let addedDays = 0
-  let cursor = result
-
-  while (addedDays < workDaysNeeded) {
-    cursor = cursor.add(1, 'day')
-    const dayOfWeek = cursor.day() // 0 = Sunday, 6 = Saturday
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      addedDays++
-    }
-  }
-
-  return cursor.toDate()
-}

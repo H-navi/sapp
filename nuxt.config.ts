@@ -53,8 +53,11 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // tugas terjadwal diaktifkan pada langkah 09
     experimental: { tasks: true },
+    scheduledTasks: {
+      '*/5 * * * *': ['approval:reminder', 'approval:escalation', 'approval:auto-decision'],
+      '0 1 * * *': ['maintenance:daily'],
+    },
   },
 
   typescript: { strict: true, typeCheck: false },

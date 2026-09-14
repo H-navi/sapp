@@ -8,7 +8,7 @@ import * as schema from '../../database/schema'
 export async function finalizeRequest(
   tx: any,
   requestId: string,
-  status: 'APPROVED' | 'REJECTED',
+  status: 'APPROVED' | 'REJECTED' | 'EXPIRED',
   source: 'USER' | 'SYSTEM_AUTO' | 'ADMIN_OVERRIDE',
   reason: string,
   decidedBy?: string | null
@@ -79,7 +79,7 @@ export async function finalizeRequest(
           note: `Pemakaian cuti disetujui untuk ${req.request_number}`,
         })
       }
-    } else if (status === 'REJECTED') {
+    } else if (status === 'REJECTED' || status === 'EXPIRED') {
       // Kembalikan kuota yang dicadangkan (RELEASE)
       const updatedQuotas = (await tx.execute(sql`
         UPDATE leave_quotas
@@ -99,7 +99,7 @@ export async function finalizeRequest(
           txnType: 'RELEASE',
           amount: String(totalDays),
           balanceAfter: String(q.balance),
-          note: `Pelepasan kuota cadangan karena pengajuan ${req.request_number} ditolak: ${reason}`,
+          note: `Pelepasan kuota cadangan karena pengajuan ${req.request_number} ${status === 'EXPIRED' ? 'kedaluwarsa' : 'ditolak'}: ${reason}`,
         })
       }
     }
@@ -120,9 +120,11 @@ export async function finalizeRequest(
       ? source === 'SYSTEM_AUTO'
         ? 'AUTO_APPROVED'
         : 'APPROVED'
-      : source === 'SYSTEM_AUTO'
-        ? 'AUTO_REJECTED'
-        : 'REJECTED'
+      : status === 'EXPIRED'
+        ? 'EXPIRED'
+        : source === 'SYSTEM_AUTO'
+          ? 'AUTO_REJECTED'
+          : 'REJECTED'
 
   await tx.insert(schema.approvalHistories).values({
     requestId: req.id,
