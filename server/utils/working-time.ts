@@ -93,10 +93,11 @@ export function getDefaultWorkingCalendar(): WorkingCalendar {
       2: { ...standardDay },
       3: { ...standardDay },
       4: { ...standardDay },
-      5: { ...standardDay },
+      5: { ...standardDay, breakStart: '11:30', breakEnd: '13:00' },
       6: { isWorkingDay: false, start: '08:00', end: '12:00', breakStart: null, breakEnd: null },
       7: { isWorkingDay: false, start: '08:00', end: '12:00', breakStart: null, breakEnd: null },
     },
+
     holidays: new Set(),
   }
 }

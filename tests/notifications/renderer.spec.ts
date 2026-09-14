@@ -51,7 +51,26 @@ describe('Notification Renderer & Sanitization', () => {
       const rendered = renderNotificationTemplate(template, vars, 'EMAIL')
       expect(rendered).toBe('Alasan: Urusan keluarga, Catatan: -')
     })
+
+    it('menggabungkan nilai array dengan koma', () => {
+      const template = 'Approver yang ditugaskan: {{approver_list}}'
+      const vars = {
+        approver_list: ['Ahmad Fauzi', 'Siti Rahma', 'Budi Santoso'],
+      }
+      const rendered = renderNotificationTemplate(template, vars, 'EMAIL')
+      expect(rendered).toBe('Approver yang ditugaskan: Ahmad Fauzi, Siti Rahma, Budi Santoso')
+    })
+
+    it('mengganti placeholder yang tidak dikenal atau null dengan "-"', () => {
+      const template = 'Info: {{unknown_param}}, Catatan: {{note}}'
+      const vars = {
+        note: null,
+      }
+      const rendered = renderNotificationTemplate(template, vars, 'EMAIL')
+      expect(rendered).toBe('Info: -, Catatan: -')
+    })
   })
+
 
   describe('Telegram HTML Escaping', () => {
     it('escapeTelegramHtml membersihkan karakter HTML berbahaya', () => {

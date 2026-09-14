@@ -222,4 +222,123 @@ describe('Duration Rule Evaluators', () => {
     const failRes = maxPerYear({ max_days: 13 }, ctx)
     expect(failRes.passed).toBe(false)
   })
+
+  it('MAX_DAYS_PER_PERIOD: tepat di batas (2 dari 2) -> lolos; 2.5 -> gagal', () => {
+    const ctxExact = createMockRuleContext({
+      request: {
+        leaveTypeId: 'lt-1',
+        startDate: '2026-03-03',
+        endDate: '2026-03-04',
+        totalDays: 2,
+        workingDays: 2,
+        attachmentCount: 0,
+        days: [
+          { date: '2026-03-03', isWorkingDay: true, dayValue: 1 },
+          { date: '2026-03-04', isWorkingDay: true, dayValue: 1 },
+        ],
+      },
+      usage: {
+        daysByWeek: { '2026-W10': 0 },
+        daysByMonth: {},
+        daysThisYear: 0,
+        requestsThisMonth: 0,
+        approvedDates: [],
+        hasPreviousRequestEver: false,
+        previousRequestNumber: null,
+        overlappingRequestNumber: null,
+        teamOnLeaveByDate: {},
+      },
+    })
+    // 2 dari 2 -> lolos
+    const resExact = maxDaysPerPeriod({ max_days: 2, period: 'WEEK' }, ctxExact)
+    expect(resExact.passed).toBe(true)
+
+    // 2.5 hari -> gagal
+    const ctxOver = createMockRuleContext({
+      request: {
+        leaveTypeId: 'lt-1',
+        startDate: '2026-03-03',
+        endDate: '2026-03-05',
+        totalDays: 2.5,
+        workingDays: 2.5,
+        attachmentCount: 0,
+        days: [
+          { date: '2026-03-03', isWorkingDay: true, dayValue: 1 },
+          { date: '2026-03-04', isWorkingDay: true, dayValue: 1 },
+          { date: '2026-03-05', isWorkingDay: true, dayValue: 0.5 },
+        ],
+      },
+      usage: {
+        daysByWeek: { '2026-W10': 0 },
+        daysByMonth: {},
+        daysThisYear: 0,
+        requestsThisMonth: 0,
+        approvedDates: [],
+        hasPreviousRequestEver: false,
+        previousRequestNumber: null,
+        overlappingRequestNumber: null,
+        teamOnLeaveByDate: {},
+      },
+    })
+    const resOver = maxDaysPerPeriod({ max_days: 2, period: 'WEEK' }, ctxOver)
+    expect(resOver.passed).toBe(false)
+  })
+
+  it('Pengajuan setengah hari dihitung 0.5, bukan 1', () => {
+    const ctxHalf = createMockRuleContext({
+      request: {
+        leaveTypeId: 'lt-1',
+        startDate: '2026-03-03',
+        endDate: '2026-03-03',
+        totalDays: 0.5,
+        workingDays: 0.5,
+        attachmentCount: 0,
+        days: [
+          { date: '2026-03-03', isWorkingDay: true, dayValue: 0.5 },
+        ],
+      },
+      usage: {
+        daysByWeek: { '2026-W10': 1 },
+        daysByMonth: {},
+        daysThisYear: 1,
+        requestsThisMonth: 1,
+        approvedDates: [],
+        hasPreviousRequestEver: false,
+        previousRequestNumber: null,
+        overlappingRequestNumber: null,
+        teamOnLeaveByDate: {},
+      },
+    })
+    // 1 terpakai + 0.5 = 1.5 <= 1.5 -> lolos jika batas 1.5
+    const resPass = maxDaysPerPeriod({ max_days: 1.5, period: 'WEEK' }, ctxHalf)
+    expect(resPass.passed).toBe(true)
+
+    // Jika batas 1.2 -> 1.5 > 1.2 -> gagal
+    const resFail = maxDaysPerPeriod({ max_days: 1.2, period: 'WEEK' }, ctxHalf)
+    expect(resFail.passed).toBe(false)
+  })
+
+  it('Aturan dengan params kosong atau salah bentuk tidak melempar uncaught error', () => {
+    const ctx = createMockRuleContext({
+      request: {
+        leaveTypeId: 'lt-1',
+        startDate: '2026-03-03',
+        endDate: '2026-03-03',
+        totalDays: 1,
+        workingDays: 1,
+        attachmentCount: 0,
+        days: [{ date: '2026-03-03', isWorkingDay: true, dayValue: 1 }],
+      },
+    })
+
+    // Params kosong {}
+    expect(() => maxDaysPerRequest({}, ctx)).not.toThrow()
+    expect(() => minDaysPerRequest({}, ctx)).not.toThrow()
+    expect(() => maxDaysPerPeriod({}, ctx)).not.toThrow()
+
+    // Params salah bentuk / tipe aneh
+    expect(() => maxDaysPerRequest({ max_days: 'invalid' as any }, ctx)).not.toThrow()
+    expect(() => maxDaysPerPeriod({ max_days: null as any, period: undefined }, ctx)).not.toThrow()
+  })
 })
+

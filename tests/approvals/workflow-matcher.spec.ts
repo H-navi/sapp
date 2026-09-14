@@ -9,6 +9,8 @@ describe('Approval Workflow Matching Logic', () => {
     minDays: number | null
     maxDays: number | null
     priority: number
+    isActive?: boolean
+    effectiveTo?: string | null
   }
 
   const seededWorkflows: MockWorkflowRule[] = [
@@ -19,9 +21,15 @@ describe('Approval Workflow Matching Logic', () => {
     { code: 'WF_CUTI_PANJANG', leaveTypeId: 'lt-cuti', departmentId: null, minDays: 5.5, maxDays: null, priority: 10 },
   ]
 
-  function matchMockWorkflow(rules: MockWorkflowRule[], request: ReturnType<typeof createMockRequestContext>) {
+  function matchMockWorkflow(
+    rules: MockWorkflowRule[],
+    request: ReturnType<typeof createMockRequestContext>,
+    currentDate = '2026-09-15'
+  ) {
     const matched = rules
       .filter((w) => {
+        if (w.isActive === false) return false
+        if (w.effectiveTo && w.effectiveTo < currentDate) return false
         if (w.leaveTypeId != null && w.leaveTypeId !== request.leaveTypeId) return false
         if (w.departmentId != null && w.departmentId !== request.employee.departmentId) return false
         if (w.minDays != null && request.totalDays < w.minDays) return false
@@ -47,16 +55,52 @@ describe('Approval Workflow Matching Logic', () => {
     expect(wf.code).toBe('WF_WFA')
   })
 
-  it('Cuti Tahunan <= 5 hari mencocokkan WF_CUTI_PENDEK', () => {
-    const req = createMockRequestContext({ leaveTypeId: 'lt-cuti', totalDays: 3 })
-    const wf = matchMockWorkflow(seededWorkflows, req)
-    expect(wf.code).toBe('WF_CUTI_PENDEK')
+  it('Cuti Tahunan tepat 5 hari mencocokkan WF_CUTI_PENDEK (uji batas)', () => {
+    const req5 = createMockRequestContext({ leaveTypeId: 'lt-cuti', totalDays: 5 })
+    const wf5 = matchMockWorkflow(seededWorkflows, req5)
+    expect(wf5.code).toBe('WF_CUTI_PENDEK')
   })
 
-  it('Cuti Tahunan > 5 hari (8 hari) mencocokkan WF_CUTI_PANJANG', () => {
-    const req = createMockRequestContext({ leaveTypeId: 'lt-cuti', totalDays: 8 })
-    const wf = matchMockWorkflow(seededWorkflows, req)
-    expect(wf.code).toBe('WF_CUTI_PANJANG')
+  it('Cuti Tahunan 5.5 hari mencocokkan WF_CUTI_PANJANG (uji batas)', () => {
+    const req55 = createMockRequestContext({ leaveTypeId: 'lt-cuti', totalDays: 5.5 })
+    const wf55 = matchMockWorkflow(seededWorkflows, req55)
+    expect(wf55.code).toBe('WF_CUTI_PANJANG')
+  })
+
+  it('Alur spesifik jenis izin mengalahkan WF_DEFAULT meski priority sama', () => {
+    const rulesWithSamePriority: MockWorkflowRule[] = [
+      { code: 'WF_DEFAULT', leaveTypeId: null, departmentId: null, minDays: null, maxDays: null, priority: 50 },
+      { code: 'WF_SPESIFIK', leaveTypeId: 'lt-khusus', departmentId: null, minDays: null, maxDays: null, priority: 50 },
+    ]
+    const req = createMockRequestContext({ leaveTypeId: 'lt-khusus', totalDays: 2 })
+    const wf = matchMockWorkflow(rulesWithSamePriority, req)
+    expect(wf.code).toBe('WF_SPESIFIK')
+  })
+
+  it('Alur kedaluwarsa (effective_to kemarin) tidak terpilih', () => {
+    const rulesWithExpired: MockWorkflowRule[] = [
+      {
+        code: 'WF_EXPIRED',
+        leaveTypeId: 'lt-promo',
+        departmentId: null,
+        minDays: null,
+        maxDays: null,
+        priority: 5,
+        effectiveTo: '2026-09-14', // kemarin
+      },
+      {
+        code: 'WF_DEFAULT',
+        leaveTypeId: null,
+        departmentId: null,
+        minDays: null,
+        maxDays: null,
+        priority: 100,
+        effectiveTo: null,
+      },
+    ]
+    const req = createMockRequestContext({ leaveTypeId: 'lt-promo', totalDays: 1 })
+    const wf = matchMockWorkflow(rulesWithExpired, req, '2026-09-15')
+    expect(wf.code).toBe('WF_DEFAULT')
   })
 
   it('Jenis izin tanpa aturan spesifik jatuh ke WF_DEFAULT', () => {
@@ -70,3 +114,4 @@ describe('Approval Workflow Matching Logic', () => {
     expect(() => matchMockWorkflow([], req)).toThrow('APPROVAL_NO_WORKFLOW')
   })
 })
+

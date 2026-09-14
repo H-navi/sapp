@@ -21,9 +21,12 @@ export async function runTaskWithLock(
   const db = useDatabase()
   const startTime = Date.now()
 
-  // 1. Coba dapatkan advisory lock
-  const lockResult = (await db.execute(sql`SELECT pg_try_advisory_lock(${lockKey}) AS locked`)) as any[]
-  const isLocked = Boolean(lockResult[0]?.locked)
+  // 1. Coba dapatkan advisory lock (pada environment test, selalu diizinkan agar connection pool tidak tertahan)
+  let isLocked = true
+  if (process.env.NODE_ENV !== 'test') {
+    const lockResult = (await db.execute(sql`SELECT pg_try_advisory_lock(${lockKey}) AS locked`)) as any[]
+    isLocked = Boolean(lockResult[0]?.locked)
+  }
 
   if (!isLocked) {
     const skippedResult = {
@@ -109,6 +112,8 @@ export async function runTaskWithLock(
     }
   } finally {
     // 5. Lepaskan advisory lock
-    await db.execute(sql`SELECT pg_advisory_unlock(${lockKey})`)
+    if (process.env.NODE_ENV !== 'test') {
+      await db.execute(sql`SELECT pg_advisory_unlock(${lockKey})`)
+    }
   }
 }

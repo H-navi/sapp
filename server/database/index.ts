@@ -7,11 +7,21 @@ let database: PostgresJsDatabase<typeof schema> | undefined
 
 export function useDatabase(): PostgresJsDatabase<typeof schema> {
   if (!database) {
-    const config = useRuntimeConfig()
-    if (!config.databaseUrl) {
-      throw createError({ statusCode: 500, statusMessage: 'DATABASE_URL belum dikonfigurasi' })
+    let dbUrl: string | undefined = process.env.DATABASE_URL
+    try {
+      // @ts-ignore
+      if (typeof useRuntimeConfig === 'function') {
+        const config = useRuntimeConfig()
+        if (config?.databaseUrl) dbUrl = config.databaseUrl as string
+      }
+    } catch {
+      // ignore
     }
-    client = postgres(config.databaseUrl as string, {
+
+    if (!dbUrl) {
+      throw new Error('DATABASE_URL belum dikonfigurasi')
+    }
+    client = postgres(dbUrl, {
       max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
@@ -21,7 +31,7 @@ export function useDatabase(): PostgresJsDatabase<typeof schema> {
       },
       onnotice: () => {},
     })
-    database = drizzle(client, { schema, casing: 'snake_case', logger: process.env.NODE_ENV === 'development' })
+    database = drizzle(client, { schema, casing: 'snake_case', logger: process.env.NODE_ENV === 'development' && process.env.NODE_ENV !== 'test' })
   }
   return database
 }

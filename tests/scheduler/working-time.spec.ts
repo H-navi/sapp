@@ -124,8 +124,57 @@ describe('Aritmetika Jam Kerja (Working Time Arithmetic)', () => {
     const to1 = dayjs.tz('2026-08-10 11:00:00', TZ).toDate()
     expect(workingHoursBetween(from1, to1, cal)).toBe(2)
 
-    // Senin 11:00 s.d. Senin 14:00 (melewati istirahat 12:00-13:00) -> 2 jam
+    // Senin 11:00 s.d. Senin 14:00 (melewati istirahat 12:00-13:00) -> 4 jam (09:00 to 14:00)
     const to2 = dayjs.tz('2026-08-10 14:00:00', TZ).toDate()
     expect(workingHoursBetween(from1, to2, cal)).toBe(4) // 09-12 (3h) + 13-14 (1h) = 4 jam
   })
+
+  it('Jam kerja Jumat berbeda (istirahat 11:30–13:00) dihitung dengan tepat', () => {
+    // 2026-08-07 adalah hari Jumat
+    // Mulai 11:00 + 2 jam kerja
+    // 11:00-11:30 = 0.5 jam
+    // Istirahat 11:30-13:00 dilewati
+    // Sisa 1.5 jam: 13:00 + 1.5 jam -> 14:30
+    const startJumat = dayjs.tz('2026-08-07 11:00:00', TZ).toDate()
+    const result = addWorkingHours(startJumat, 2, cal)
+    const formatted = dayjs(result).tz(TZ).format('YYYY-MM-DD HH:mm')
+
+    expect(formatted).toBe('2026-08-07 14:30')
+  })
+
+  it('addWorkingHours(x, 0) selalu mengembalikan x', () => {
+    const time = dayjs.tz('2026-08-10 10:15:20', TZ).toDate()
+    const result = addWorkingHours(time, 0, cal)
+    expect(result.getTime()).toBe(time.getTime())
+  })
+
+  it('Menambah jam kerja yang melewati cuti bersama berturut-turut', () => {
+    const holidayCal: WorkingCalendar = getDefaultWorkingCalendar()
+    // Libur berturut-turut: Jumat 2026-05-22 dan Senin 2026-05-25 (Cuti Bersama)
+    holidayCal.holidays.add('2026-05-22')
+    holidayCal.holidays.add('2026-05-25')
+
+    // Kamis 2026-05-21 jam 15:00 + 4 jam kerja
+    // Kamis 15:00-17:00 (2 jam kerja, sisa 2 jam)
+    // Lewat Jumat (libur), Sabtu (libur), Minggu (libur), Senin (libur)
+    // Masuk Selasa 2026-05-26 jam 08:00 + 2 jam -> 10:00
+    const startKamis = dayjs.tz('2026-05-21 15:00:00', TZ).toDate()
+    const result = addWorkingHours(startKamis, 4, holidayCal)
+    const formatted = dayjs(result).tz(TZ).format('YYYY-MM-DD HH:mm')
+
+    expect(formatted).toBe('2026-05-26 10:00')
+  })
+
+  it('workingHoursBetween untuk waktu yang seluruhnya di luar jam kerja = 0', () => {
+    // Sabtu malam 20:00 s.d. 23:00 (seluruhnya di luar jam kerja)
+    const fromSabtu = dayjs.tz('2026-08-08 20:00:00', TZ).toDate()
+    const toSabtu = dayjs.tz('2026-08-08 23:00:00', TZ).toDate()
+    expect(workingHoursBetween(fromSabtu, toSabtu, cal)).toBe(0)
+
+    // Tengah malam Senin 01:00 s.d. 03:00
+    const fromSeninDiniHari = dayjs.tz('2026-08-10 01:00:00', TZ).toDate()
+    const toSeninDiniHari = dayjs.tz('2026-08-10 03:00:00', TZ).toDate()
+    expect(workingHoursBetween(fromSeninDiniHari, toSeninDiniHari, cal)).toBe(0)
+  })
 })
+

@@ -7,6 +7,7 @@ import { ambilRequestContext, matchWorkflow } from './workflow-matcher'
 import { resolveApprovers } from './approver-resolver'
 import { finalizeRequest } from './decision'
 import { loadWorkingCalendar, addWorkingHours, isWithinWorkingHours, nextWorkingMoment } from '../../utils/working-time'
+import { queueNotification } from '../notification/enqueue'
 
 /**
  * Memulai alur persetujuan saat pengajuan disubmit.
@@ -214,6 +215,25 @@ export async function activateStep(
       })),
     },
   })
+
+  // Antre notifikasi ke para approver
+  for (const c of candidates) {
+    try {
+      await queueNotification(
+        {
+          eventType: 'APPROVAL_TASK_ASSIGNED',
+          recipientEmployeeId: c.employeeId,
+          requestId,
+          taskId: task.id,
+          channels: step.reminderChannels || ['EMAIL'],
+          dedupeKey: `step_assigned:${task.id}:${c.employeeId}`,
+        },
+        tx
+      )
+    } catch (notifErr) {
+      console.warn(`[activateStep] Gagal antre notifikasi untuk ${c.employeeId}:`, notifErr)
+    }
+  }
 }
 
 /**
@@ -244,7 +264,7 @@ export async function actOnTask(input: {
       FROM approval_tasks t
       LEFT JOIN employees e ON e.id = t.acted_by
       WHERE t.id = ${input.taskId}::uuid
-      FOR UPDATE
+      FOR UPDATE OF t
     `)) as any[]
 
     if (taskRows.length === 0) {

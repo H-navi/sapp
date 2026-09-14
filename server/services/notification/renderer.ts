@@ -232,7 +232,7 @@ export async function buildNotificationVariables(
   if (ctx.extraVars) {
     for (const [k, v] of Object.entries(ctx.extraVars)) {
       if (v !== undefined && v !== null) {
-        vars[k] = String(v)
+        vars[k] = Array.isArray(v) ? v.join(', ') : String(v)
       }
     }
   }
@@ -246,16 +246,26 @@ export async function buildNotificationVariables(
  */
 export function renderNotificationTemplate(
   templateText: string,
-  variables: Record<string, string>,
+  variables: Record<string, any>,
   channel: 'EMAIL' | 'TELEGRAM' | 'IN_APP' = 'EMAIL'
 ): string {
   if (!templateText) return ''
 
   return templateText.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
-    const rawVal = variables[key] ?? '-'
-    if (channel === 'TELEGRAM') {
-      return escapeTelegramHtml(rawVal)
+    const rawVal = variables[key]
+    let valStr: string
+    if (rawVal === undefined || rawVal === null || rawVal === '') {
+      valStr = '-'
+    } else if (Array.isArray(rawVal)) {
+      valStr = rawVal.join(', ')
+    } else {
+      valStr = String(rawVal)
     }
-    return rawVal
+
+    if (channel === 'TELEGRAM') {
+      return escapeTelegramHtml(valStr)
+    }
+    return valStr
   })
 }
+

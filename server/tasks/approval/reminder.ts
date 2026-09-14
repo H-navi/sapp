@@ -10,10 +10,10 @@ export default defineTask({
     name: 'approval:reminder',
     description: 'Kirim pengingat persetujuan berkala dalam jam kerja',
   },
-  async run() {
+  async run(customNow?: Date) {
     return await runTaskWithLock('approval:reminder', 8001, async (db) => {
       const cal = await loadWorkingCalendar()
-      const now = new Date()
+      const now = customNow || new Date()
 
       // 1. Ambil tugas pending yang jadwal pengingatnya telah tiba
       const tasks = (await db.execute(sql`

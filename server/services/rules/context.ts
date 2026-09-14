@@ -148,7 +148,7 @@ export async function buildRuleContext(input: EvaluateInput): Promise<RuleContex
           SELECT balance::numeric, allocated::numeric, used::numeric, reserved::numeric
           FROM leave_quotas
           WHERE employee_id = ${input.employeeId}::uuid
-            AND year = EXTRACT(YEAR FROM CURRENT_DATE)::smallint
+            AND period_year = EXTRACT(YEAR FROM CURRENT_DATE)::smallint
           LIMIT 1
         `) as Promise<any[]>)
       : Promise.resolve([]),

@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import { createError, type H3Event } from 'h3'
 import type { AuthContext } from './auth'
 
 export function requireAuth(event: H3Event): AuthContext {
