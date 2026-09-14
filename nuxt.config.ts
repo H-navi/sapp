@@ -56,6 +56,7 @@ export default defineNuxtConfig({
     experimental: { tasks: true },
     scheduledTasks: {
       '*/5 * * * *': ['approval:reminder', 'approval:escalation', 'approval:auto-decision'],
+      '*/2 * * * *': ['notification:dispatch'],
       '0 1 * * *': ['maintenance:daily'],
     },
   },
