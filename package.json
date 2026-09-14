@@ -1,0 +1,40 @@
+{
+  "name": "sapp",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "db:pull": "dotenv -e .env -- drizzle-kit pull",
+    "db:studio": "dotenv -e .env -- drizzle-kit studio",
+    "hash": "tsx scripts/hash-password.ts",
+    "verify:db": "tsx scripts/verify-db.ts",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.9",
+    "bcryptjs": "^3.0.3",
+    "dayjs": "^1.11.13",
+    "drizzle-orm": "^0.41.0",
+    "nodemailer": "^6.10.1",
+    "nuxt": "^4.5.2",
+    "postgres": "^3.4.5",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/alpinejs": "^3.13.11",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/nodemailer": "^6.4.17",
+    "dotenv-cli": "^8.0.0",
+    "drizzle-kit": "^0.30.5",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.8.2",
+    "vue-tsc": "^3.3.11"
+  }
+}
