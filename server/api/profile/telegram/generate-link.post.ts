@@ -16,19 +16,16 @@ async function getBotUsername(token: string): Promise<string> {
   } catch (err) {
     console.warn('Gagal memanggil getMe Telegram:', err)
   }
-  return process.env.TELEGRAM_BOT_USERNAME || 'PerizinanPegawaiBot'
+  return process.env.TELEGRAM_BOT_USERNAME || 'perizinan_kantor_notif_bot'
 }
 
 export default defineEventHandler(async (event) => {
   const auth = requireAuth(event)
-  if (!auth.employeeId) {
-    throw createError({ statusCode: 400, message: 'Akun Anda tidak terikat dengan profil pegawai.' })
-  }
 
   const tokenStr = process.env.TELEGRAM_BOT_TOKEN?.trim() || ''
-  const botUsername = tokenStr ? await getBotUsername(tokenStr) : (process.env.TELEGRAM_BOT_USERNAME || 'PerizinanPegawaiBot')
+  const botUsername = tokenStr ? await getBotUsername(tokenStr) : (process.env.TELEGRAM_BOT_USERNAME || 'perizinan_kantor_notif_bot')
 
-  const linkingToken = createTelegramLinkingToken(auth.employeeId)
+  const linkingToken = createTelegramLinkingToken(auth.userId, auth.employeeId)
   const deepLink = `https://t.me/${botUsername}?start=${linkingToken}`
 
   return {

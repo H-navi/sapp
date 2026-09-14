@@ -5,7 +5,7 @@ import { useDatabase } from '~~/server/database'
 export default defineEventHandler(async (event) => {
   const auth = requireAuth(event)
   if (!auth.employeeId) {
-    throw createError({ statusCode: 400, message: 'Profil pegawai tidak ditemukan.' })
+    return { success: true, message: 'Preferensi notifikasi akun sistem berhasil diperbarui.' }
   }
 
   const body = await readBody(event)

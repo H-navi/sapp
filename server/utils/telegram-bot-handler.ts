@@ -11,6 +11,7 @@ export async function handleTelegramUpdate(update: any) {
   if (!message || !message.text) return
 
   const chatId = String(message.chat.id)
+  const tgUsername = message.from?.username || null
   const text = message.text.trim()
   const db = useDatabase()
 
@@ -27,8 +28,8 @@ export async function handleTelegramUpdate(update: any) {
       return
     }
 
-    const employeeId = verifyTelegramLinkingToken(token)
-    if (!employeeId) {
+    const tokenData = verifyTelegramLinkingToken(token)
+    if (!tokenData) {
       await sendTelegramNotification({
         chatId,
         text: `❌ <b>Tautan Tidak Valid atau Kadaluarsa</b>\n\nToken penautan sudah melewati batas waktu 15 menit atau telah digunakan. Silakan klik tombol <b>Hubungkan Telegram</b> kembali pada halaman Profil aplikasi.`,
@@ -36,12 +37,25 @@ export async function handleTelegramUpdate(update: any) {
       return
     }
 
-    // Simpan telegram_chat_id ke tabel employees
+    // Update di tabel auth.users
     await db.execute(sql`
-      UPDATE org.employees
-      SET telegram_chat_id = ${chatId}, updated_at = NOW()
-      WHERE id = ${employeeId}::uuid
+      UPDATE auth.users
+      SET telegram_chat_id = ${chatId},
+          telegram_username = ${tgUsername},
+          updated_at = NOW()
+      WHERE id = ${tokenData.userId}::uuid
     `)
+
+    // Jika terkait dengan employee, simpan juga di org.employees
+    if (tokenData.employeeId) {
+      await db.execute(sql`
+        UPDATE org.employees
+        SET telegram_chat_id = ${chatId},
+            telegram_username = ${tgUsername},
+            updated_at = NOW()
+        WHERE id = ${tokenData.employeeId}::uuid
+      `)
+    }
 
     await sendTelegramNotification({
       chatId,
@@ -53,8 +67,14 @@ export async function handleTelegramUpdate(update: any) {
   // 2. Perintah /putuskan
   if (text === '/putuskan') {
     await db.execute(sql`
+      UPDATE auth.users
+      SET telegram_chat_id = NULL, telegram_username = NULL, updated_at = NOW()
+      WHERE telegram_chat_id = ${chatId}
+    `)
+
+    await db.execute(sql`
       UPDATE org.employees
-      SET telegram_chat_id = NULL, updated_at = NOW()
+      SET telegram_chat_id = NULL, telegram_username = NULL, updated_at = NOW()
       WHERE telegram_chat_id = ${chatId}
     `)
 
@@ -68,6 +88,6 @@ export async function handleTelegramUpdate(update: any) {
   // 3. Pesan umum / bantuan
   await sendTelegramNotification({
     chatId,
-    text: `Halo! Ini adalah notifikasi satu arah Sistem Perizinan Pegawai.\n\nBuka menu <b>Profil</b> di aplikasi untuk mengelola preferensi notifikasi Anda.`,
+    text: `Halo! Ini adalah bot notifikasi Sistem Perizinan Pegawai.\n\nBuka menu <b>Profil</b> di aplikasi web untuk mengelola preferensi notifikasi Anda.`,
   })
 }

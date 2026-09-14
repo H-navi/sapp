@@ -5,7 +5,16 @@ import { useDatabase } from '~~/server/database'
 export default defineEventHandler(async (event) => {
   const auth = requireAuth(event)
   if (!auth.employeeId) {
-    throw createError({ statusCode: 400, message: 'Profil pegawai tidak ditemukan.' })
+    return {
+      data: {
+        emailEnabled: true,
+        telegramEnabled: true,
+        tasksEnabled: true,
+        remindersEnabled: true,
+        quietHoursStart: null,
+        quietHoursEnd: null,
+      },
+    }
   }
 
   const db = useDatabase()

@@ -46,7 +46,8 @@ export default defineEventHandler(async (event) => {
 
   // Ambil profil admin
   const userRows = (await db.execute(sql`
-    SELECT u.id, u.email AS user_email, e.id AS employee_id, e.full_name, e.email AS employee_email, e.telegram_chat_id
+    SELECT u.id, u.email AS user_email, e.id AS employee_id, COALESCE(e.full_name, u.username) AS full_name,
+           e.email AS employee_email, COALESCE(e.telegram_chat_id, u.telegram_chat_id) AS telegram_chat_id
     FROM auth.users u
     LEFT JOIN org.employees e ON e.id = u.employee_id
     WHERE u.id = ${auth.userId}::uuid
@@ -58,7 +59,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = userRows[0]
-  const targetEmail = user.employee_email || user.user_email
+  let targetEmail = user.employee_email || user.user_email
+  if ((!targetEmail || targetEmail.endsWith('@perusahaan.co.id')) && process.env.SMTP_USER) {
+    targetEmail = process.env.SMTP_USER.trim()
+  }
 
   const mockContext = {
     ...MOCK_VARS,

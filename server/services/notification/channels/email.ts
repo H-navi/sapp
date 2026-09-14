@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import dotenv from 'dotenv'
 
 export interface SendEmailInput {
   to: string
@@ -15,22 +16,30 @@ export interface SendEmailResult {
   simulated?: boolean
 }
 
+let cachedTransporterKey = ''
 let cachedTransporter: nodemailer.Transporter | null = null
 
 function getTransporter(): { transporter: nodemailer.Transporter | null; isConfigured: boolean; fromAddress: string } {
-  const host = process.env.SMTP_HOST || ''
-  const port = Number(process.env.SMTP_PORT || 587)
-  const user = process.env.SMTP_USER || ''
-  const pass = process.env.SMTP_PASSWORD || ''
-  const fromAddress = process.env.SMTP_FROM || 'Sistem Perizinan <no-reply@perusahaan.co.id>'
+  try {
+    dotenv.config({ override: true })
+  } catch {}
 
-  const isConfigured = Boolean(host.trim() && user.trim())
+  let host = (process.env.SMTP_HOST || '').trim()
+  if (host === 'smptp.gmail.com') host = 'smtp.gmail.com'
+  const port = Number(process.env.SMTP_PORT || 587)
+  const user = (process.env.SMTP_USER || '').trim()
+  const rawPass = process.env.SMTP_PASSWORD || ''
+  const pass = rawPass.replace(/\s+/g, '')
+  const fromAddress = process.env.SMTP_FROM || `Sistem Perizinan <${user || 'no-reply@perusahaan.co.id'}>`
+
+  const isConfigured = Boolean(host && user && pass)
 
   if (!isConfigured) {
     return { transporter: null, isConfigured: false, fromAddress }
   }
 
-  if (!cachedTransporter) {
+  const currentKey = `${host}:${port}:${user}:${pass}`
+  if (!cachedTransporter || cachedTransporterKey !== currentKey) {
     cachedTransporter = nodemailer.createTransport({
       host,
       port,
@@ -43,6 +52,7 @@ function getTransporter(): { transporter: nodemailer.Transporter | null; isConfi
         rejectUnauthorized: false,
       },
     })
+    cachedTransporterKey = currentKey
   }
 
   return { transporter: cachedTransporter, isConfigured: true, fromAddress }

@@ -25,7 +25,13 @@ export function escapeTelegramHtml(str: string): string {
     .replace(/>/g, '&gt;')
 }
 
+import dotenv from 'dotenv'
+
 export async function sendTelegramNotification(input: SendTelegramInput): Promise<SendTelegramResult> {
+  try {
+    dotenv.config({ override: true })
+  } catch {}
+
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim() || ''
 
   if (!token) {
