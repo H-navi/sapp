@@ -114,12 +114,16 @@ watch(
 const selectedFiles = ref<File[]>([])
 const fileError = ref('')
 
-function handleFileChange(e: Event) {
-  fileError.value = ''
-  const target = e.target as HTMLInputElement
-  if (!target.files) return
+const uploadedFileList = computed(() =>
+  selectedFiles.value.map((f) => ({
+    name: f.name,
+    sizeBytes: f.size,
+  }))
+)
 
-  const newFiles = Array.from(target.files)
+function handleFilesSelected(fileList: FileList) {
+  fileError.value = ''
+  const newFiles = Array.from(fileList)
   if (selectedFiles.value.length + newFiles.length > 5) {
     fileError.value = 'Maksimal 5 berkas lampiran.'
     return
@@ -200,10 +204,10 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-xl mx-auto pb-10">
+  <div class="space-y-6 max-w-xl mx-auto pb-28">
     <AppPageHeader
       title="Buat Pengajuan Baru"
-      description="Lengkapi formulir permohonan perizinan atau cuti pegawai."
+      subtitle="Lengkapi formulir permohonan perizinan atau cuti pegawai."
     />
 
     <!-- Error Hak Pengajuan -->
@@ -228,13 +232,13 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
     <!-- Form Utama -->
     <form v-else class="space-y-6" @submit.prevent>
       <!-- LANGKAH 1: PILIH JENIS IZIN -->
-      <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+      <section class="card space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span class="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs">1</span>
             Pilih Jenis Izin
           </h2>
-          <span v-if="currentQuota" class="text-xs font-semibold text-slate-500">
+          <span v-if="currentQuota" class="text-xs font-semibold text-slate-500 tabular-nums">
             Sisa Kuota: <span class="text-blue-600 font-bold">{{ currentQuota.balance }}</span> hari
           </span>
         </div>
@@ -245,7 +249,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
             v-for="lt in allowedLeaveTypes"
             :key="lt.id"
             type="button"
-            class="p-3 text-left rounded-xl border-2 transition flex flex-col justify-between gap-2 active:scale-95"
+            class="p-3 text-left rounded-xl border-2 transition flex flex-col justify-between gap-2 active:scale-95 min-h-[44px]"
             :class="
               form.leaveTypeId === lt.id
                 ? 'border-blue-600 bg-blue-50/50 shadow-xs'
@@ -292,39 +296,26 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
       </section>
 
       <!-- LANGKAH 2: TANGGAL & DURASI -->
-      <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+      <section class="card space-y-4">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
           <span class="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs">2</span>
           Tanggal & Durasi
         </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <AppFormField label="Tanggal Mulai" required>
-            <input
-              v-model="form.startDate"
-              type="date"
-              required
-              class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            />
-          </AppFormField>
-
-          <AppFormField label="Tanggal Selesai" required>
-            <input
-              v-model="form.endDate"
-              type="date"
-              required
-              class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            />
-          </AppFormField>
-        </div>
+        <AppDateRange
+          v-model:start-date="form.startDate"
+          v-model:end-date="form.endDate"
+          :working-days="previewData?.workingDays"
+          :total-days="previewData?.totalDays"
+        />
 
         <!-- Opsi Setengah Hari bila Diizinkan -->
-        <div v-if="selectedLeaveType?.allowHalfDay" class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+        <div v-if="selectedLeaveType?.allowHalfDay" class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Porsi Hari Mulai</label>
             <select
               v-model="form.startDayPart"
-              class="w-full text-xs rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+              class="input text-xs"
             >
               <option value="FULL_DAY">Seharian Penuh</option>
               <option value="MORNING">Pagi</option>
@@ -335,7 +326,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
             <label class="block text-xs font-semibold text-slate-600 mb-1">Porsi Hari Selesai</label>
             <select
               v-model="form.endDayPart"
-              class="w-full text-xs rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+              class="input text-xs"
             >
               <option value="FULL_DAY">Seharian Penuh</option>
               <option value="MORNING">Pagi</option>
@@ -344,26 +335,9 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
           </div>
         </div>
 
-        <!-- Hasil Perhitungan Durasi Otomatis (Debounced) -->
-        <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-blue-900">Durasi Efektif Pengajuan:</span>
-            <span v-if="previewLoading" class="text-xs text-slate-400 animate-pulse">Menghitung...</span>
-            <span v-else-if="previewData" class="text-base font-extrabold text-blue-700">
-              {{ previewData.totalDays }} hari
-            </span>
-          </div>
-
-          <div v-if="previewData" class="text-xs text-slate-600 flex items-center gap-2">
-            <span>💼 {{ previewData.workingDays }} hari kerja</span>
-            <span>•</span>
-            <span>📅 {{ previewData.calendarDays }} hari kalender</span>
-          </div>
-
-          <p v-if="previewError" class="text-xs text-red-600 font-medium">
-            {{ previewError }}
-          </p>
-        </div>
+        <p v-if="previewError" class="text-xs text-red-600 font-medium">
+          {{ previewError }}
+        </p>
 
         <!-- Banner Hasil Evaluasi Aturan (Pre-check) -->
         <div v-if="previewData?.ruleResult" class="space-y-2 pt-1">
@@ -427,19 +401,19 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
       </section>
 
       <!-- LANGKAH 3: ALASAN, DELEGASI & LAMPIRAN -->
-      <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+      <section class="card space-y-4">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
           <span class="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs">3</span>
           Alasan & Lampiran
         </h2>
 
-        <AppFormField label="Alasan Pengajuan" required>
+        <AppFormField label="Alasan Pengajuan" required hint="Min. 10 karakter">
           <textarea
             v-model="form.reason"
             rows="3"
             required
-            placeholder="Tuliskan alasan pengajuan secara jelas (minimal 10 karakter)..."
-            class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            placeholder="Tuliskan alasan pengajuan secara jelas..."
+            class="input"
           ></textarea>
         </AppFormField>
 
@@ -447,7 +421,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
           <AppFormField label="Pelimpahan Tugas (Delegasi)">
             <select
               v-model="form.delegateEmployeeId"
-              class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 bg-white"
+              class="input"
             >
               <option value="">-- Tidak Ada Pelimpahan --</option>
               <option v-for="p in peers" :key="p.id" :value="p.id">
@@ -460,8 +434,9 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
             <input
               v-model="form.contactPhone"
               type="tel"
-              placeholder="e.g. 08123456789"
-              class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              inputmode="tel"
+              placeholder="08123456789"
+              class="input"
             />
           </AppFormField>
         </div>
@@ -470,61 +445,28 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
           <input
             v-model="form.addressDuringLeave"
             type="text"
-            placeholder="e.g. Rumah / Luar kota"
-            class="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            placeholder="Contoh: Rumah / Luar kota"
+            class="input"
           />
         </AppFormField>
 
         <!-- Unggah Lampiran -->
         <div class="space-y-2 pt-2 border-t border-slate-100">
           <div class="flex items-center justify-between">
-            <label class="block text-xs font-semibold text-slate-700">
+            <label class="label text-xs">
               Lampiran Pendukung
               <span v-if="selectedLeaveType?.requiresAttachment" class="text-red-500 font-bold">*Wajib</span>
             </label>
-            <span class="text-[10px] text-slate-400">Maks. 5 berkas (@5MB, PDF/JPG/PNG)</span>
+            <span class="text-[11px] text-slate-400">Maks. 5 berkas (@5MB)</span>
           </div>
 
-          <label
-            class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-slate-50 hover:bg-blue-50/40 transition"
-          >
-            <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span class="text-xs font-semibold text-slate-700">Pilih Berkas atau Buka Kamera</span>
-            <input
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,application/pdf"
-              capture="environment"
-              class="hidden"
-              @change="handleFileChange"
-            />
-          </label>
-
+          <AppFileUpload
+            :files="uploadedFileList"
+            :multiple="true"
+            @select="handleFilesSelected"
+            @remove="removeFile"
+          />
           <p v-if="fileError" class="text-xs text-red-600 font-medium">{{ fileError }}</p>
-
-          <!-- Daftar Berkas Terpilih -->
-          <div v-if="selectedFiles.length > 0" class="space-y-1.5 pt-1">
-            <div
-              v-for="(f, idx) in selectedFiles"
-              :key="idx"
-              class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs"
-            >
-              <span class="font-medium text-slate-800 truncate max-w-[200px]">{{ f.name }}</span>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] text-slate-400">({{ (f.size / 1024).toFixed(0) }} KB)</span>
-                <button
-                  type="button"
-                  class="text-red-500 hover:text-red-700 font-bold px-1"
-                  @click="removeFile(idx)"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -533,26 +475,27 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
         {{ submitError }}
       </div>
 
-      <!-- Tombol Aksi Bawah -->
-      <div class="flex items-center gap-3 pt-2">
+      <!-- Sticky Bottom Action Bar (Thumb Zone) -->
+      <AppStickyActions>
         <button
           type="button"
-          class="flex-1 py-3 px-4 text-xs font-bold rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition active:scale-[0.98] disabled:opacity-50"
+          class="btn-ghost flex-1"
           :disabled="submitting"
           @click="handleSubmit('draft')"
         >
-          Simpan sebagai Draf
+          Simpan Draf
         </button>
 
         <button
           type="button"
-          class="flex-1 py-3 px-4 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn-primary flex-1"
           :disabled="submitting || isBlocked"
           @click="handleSubmit('submit')"
         >
           {{ submitting ? 'Mengirim...' : 'Kirim Pengajuan' }}
         </button>
-      </div>
+      </AppStickyActions>
     </form>
   </div>
 </template>
+

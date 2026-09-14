@@ -122,5 +122,8 @@ const userInitials = computed(() => {
         </li>
       </ul>
     </nav>
+
+    <!-- Global Floating Toast Feedback -->
+    <AppToast />
   </div>
 </template>

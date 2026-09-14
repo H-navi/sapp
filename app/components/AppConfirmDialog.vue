@@ -21,7 +21,22 @@ const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'cancel'): void
 }>()
+
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    emit('cancel')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+})
 </script>
+
 
 <template>
   <Teleport to="body">

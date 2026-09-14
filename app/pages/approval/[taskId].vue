@@ -18,6 +18,11 @@ const teamLeaves = computed(() => detail.value?.teamLeaves ?? [])
 const attachments = computed(() => detail.value?.attachments ?? [])
 const days = computed(() => detail.value?.days ?? [])
 
+const { data: timelineRes, pending: timelinePending } = await useFetch<{ data: any }>(
+  () => (req.value?.id ? `/api/requests/${req.value.id}/timeline` : null)
+)
+const timelineData = computed(() => timelineRes.value?.data)
+
 useHead({
   title: computed(() =>
     req.value
@@ -255,15 +260,15 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
       </div>
 
       <!-- Hasil Evaluasi Mesin Aturan Bisnis (Task 07 Engine) -->
-      <div class="card p-5 space-y-3">
+      <div class="card space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Evaluasi Aturan & Kebijakan Sistem
+            Evaluasi Aturan & Kebijakan
           </h3>
-          <span class="text-xs text-slate-400">
+          <span class="text-xs text-slate-500 tabular-nums">
             {{ ruleChecks.filter((r: any) => r.passed).length }}/{{ ruleChecks.length }} Lolos
           </span>
         </div>
@@ -272,39 +277,19 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
           Tidak ada aturan sistem spesifik yang dievaluasi untuk jenis izin ini.
         </div>
 
-        <div v-else class="space-y-2">
-          <div
-            v-for="rc in ruleChecks"
-            :key="rc.id"
-            class="flex items-start gap-2.5 p-2.5 rounded-lg border text-xs"
-            :class="rc.passed ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'"
-          >
-            <div class="mt-0.5 flex-shrink-0">
-              <svg v-if="rc.passed" class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              <svg v-else class="h-4 w-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <div class="flex-1">
-              <p class="font-semibold">{{ rc.message }}</p>
-              <p class="text-[11px] opacity-75 font-mono mt-0.5">Kode Aturan: {{ rc.ruleCode }}</p>
-            </div>
-          </div>
-        </div>
+        <RuleCheckList v-else :rules="ruleChecks" />
       </div>
 
       <!-- Konteks Tim Saat Ini (Rekan Divisi yang Izin pada Tanggal Serupa) -->
-      <div class="card p-5 space-y-3">
+      <div class="card space-y-3">
         <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <svg class="h-4 w-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           Konteks Rekan Satu Divisi
         </h3>
 
-        <div v-if="teamLeaves.length === 0" class="p-3 bg-slate-50 rounded-lg text-xs text-slate-500">
+        <div v-if="teamLeaves.length === 0" class="p-3 bg-slate-50 rounded-xl text-xs text-slate-500">
           Tidak ada rekan lain dalam satu divisi yang mengambil izin pada rentang tanggal ini.
         </div>
 
@@ -312,7 +297,7 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
           <div
             v-for="(tl, idx) in teamLeaves"
             :key="idx"
-            class="flex items-center justify-between p-2.5 bg-amber-50/60 border border-amber-200 rounded-lg text-xs text-amber-900"
+            class="flex items-center justify-between p-2.5 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900"
           >
             <div class="flex items-center gap-2">
               <span class="h-2 w-2 rounded-full bg-amber-500"></span>
@@ -324,92 +309,48 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
         </div>
       </div>
 
-      <!-- Riwayat Seluruh Tahap Persetujuan (Stepper) -->
-      <div class="card p-5 space-y-4">
-        <h3 class="text-sm font-bold text-slate-900">Alur Persetujuan Bertingkat</h3>
+      <!-- Stepper Ringkasan Tahapan Persetujuan -->
+      <ApprovalStepper
+        v-if="timelineData?.steps?.length"
+        :steps="timelineData.steps"
+      />
 
-        <div class="relative pl-6 space-y-5 border-l-2 border-slate-200">
-          <div
-            v-for="st in approvalSteps"
-            :key="st.id"
-            class="relative group"
-          >
-            <!-- Dot Indikator -->
-            <span
-              class="absolute -left-[31px] flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
-              :class="{
-                'bg-emerald-500': st.status === 'APPROVED',
-                'bg-rose-500': st.status === 'REJECTED',
-                'bg-brand-600 ring-4 ring-brand-100': st.status === 'PENDING',
-                'bg-slate-300': st.status === 'WAITING' || st.status === 'SKIPPED',
-              }"
-            >
-              {{ st.stepOrder }}
-            </span>
-
-            <div class="space-y-0.5">
-              <div class="flex items-center gap-2">
-                <h4 class="text-xs font-bold text-slate-900">{{ st.stepName }}</h4>
-                <span
-                  class="badge text-[10px]"
-                  :class="{
-                    'bg-emerald-50 text-emerald-700': st.status === 'APPROVED',
-                    'bg-rose-50 text-rose-700': st.status === 'REJECTED',
-                    'bg-amber-50 text-amber-800': st.status === 'PENDING',
-                    'bg-slate-100 text-slate-600': st.status === 'WAITING' || st.status === 'SKIPPED',
-                  }"
-                >
-                  {{ st.status }}
-                </span>
-              </div>
-
-              <p v-if="st.actedByName" class="text-xs text-slate-600">
-                Diproses oleh <span class="font-semibold">{{ st.actedByName }}</span>
-                <span v-if="st.actedAt"> pada {{ formatDateTime(st.actedAt) }}</span>
-              </p>
-
-              <p v-if="st.actionNote" class="text-xs italic text-slate-500 bg-slate-50 p-2 rounded mt-1">
-                "{{ st.actionNote }}"
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Lini Masa Perjalanan Pengajuan Lengkap -->
+      <RequestTimeline
+        :entries="timelineData?.timeline || []"
+        :loading="timelinePending"
+      />
     </div>
 
-    <!-- Sticky Bottom Action Bar (Mobile Single-Thumb & Desktop Floating) -->
-    <div
-      v-if="task && task.status === 'PENDING' && !conflictNotice"
-      class="fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 shadow-lg md:pb-3 pb-[env(safe-area-inset-bottom,12px)]"
-    >
-      <div class="mx-auto max-w-3xl flex items-center gap-3">
-        <!-- Tombol Tolak -->
-        <button
-          type="button"
-          class="flex-1 min-h-12 py-3 px-4 rounded-xl border-2 border-rose-300 text-rose-700 font-bold text-sm hover:bg-rose-50 active:scale-[0.98] transition flex items-center justify-center gap-1.5"
-          :disabled="isSubmitting"
-          @click="openRejectModal"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Tolak
-        </button>
+    <!-- Sticky Bottom Action Bar (Thumb Zone) -->
+    <AppStickyActions v-if="task && task.status === 'PENDING' && !conflictNotice">
+      <!-- Tombol Tolak -->
+      <button
+        type="button"
+        class="btn-ghost flex-1 text-red-600 border-red-200 hover:bg-red-50 font-bold text-sm"
+        :disabled="isSubmitting"
+        @click="openRejectModal"
+      >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Tolak</span>
+      </button>
 
-        <!-- Tombol Setujui -->
-        <button
-          type="button"
-          class="flex-2 min-h-12 py-3 px-6 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 shadow-md shadow-emerald-600/20 active:scale-[0.98] transition flex items-center justify-center gap-2"
-          :disabled="isSubmitting"
-          @click="openApproveModal"
-        >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-          </svg>
-          Setujui Pengajuan
-        </button>
-      </div>
-    </div>
+      <!-- Tombol Setujui -->
+      <button
+        type="button"
+        class="btn-primary flex-2 font-bold text-sm"
+        :disabled="isSubmitting"
+        @click="openApproveModal"
+      >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>Setujui</span>
+      </button>
+    </AppStickyActions>
+
 
     <!-- Modal Konfirmasi Penolakan (Wajib Catatan >= 10 Karakter) -->
     <div

@@ -72,6 +72,7 @@ export const notifications = pgTable('notifications', {
   dedupeKey: varchar('dedupe_key', { length: 180 }),
   payload: jsonb('payload').notNull().default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const inAppNotifications = pgTable('in_app_notifications', {

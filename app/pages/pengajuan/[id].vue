@@ -11,32 +11,16 @@ const { data: requestData, pending, error, refresh } = await useFetch<{ data: an
   `/api/requests/${requestId}`
 )
 
+const { data: timelineRes, pending: timelinePending, refresh: refreshTimeline } = await useFetch<{ data: any }>(
+  `/api/requests/${requestId}/timeline`
+)
+
 const req = computed(() => requestData.value?.data)
+const timelineData = computed(() => timelineRes.value?.data)
 
 useHead({
   title: computed(() => (req.value ? `Pengajuan ${req.value.requestNumber}` : 'Detail Pengajuan')),
 })
-
-function statusBadge(status: string) {
-  switch (status) {
-    case 'DRAFT':
-      return { label: 'Draf', class: 'bg-slate-100 text-slate-700 border-slate-200' }
-    case 'SUBMITTED':
-      return { label: 'Menunggu', class: 'bg-amber-50 text-amber-700 border-amber-200' }
-    case 'IN_REVIEW':
-      return { label: 'Sedang Direviu', class: 'bg-blue-50 text-blue-700 border-blue-200' }
-    case 'APPROVED':
-      return { label: 'Disetujui', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
-    case 'REJECTED':
-      return { label: 'Ditolak', class: 'bg-red-50 text-red-700 border-red-200' }
-    case 'CANCELLED':
-      return { label: 'Dibatalkan', class: 'bg-slate-100 text-slate-500 border-slate-200' }
-    case 'EXPIRED':
-      return { label: 'Kadaluarsa', class: 'bg-rose-50 text-rose-700 border-rose-200' }
-    default:
-      return { label: status, class: 'bg-slate-100 text-slate-700 border-slate-200' }
-  }
-}
 
 function formatDateRange(start: string, end: string) {
   const s = dayjs(start).format('DD MMMM YYYY')
@@ -44,6 +28,7 @@ function formatDateRange(start: string, end: string) {
   if (s === e) return s
   return `${s} – ${e}`
 }
+
 
 // Action Submit Draft
 const submitting = ref(false)
@@ -54,7 +39,7 @@ async function submitDraft() {
   submitting.value = true
   try {
     await $fetch(`/api/requests/${requestId}/submit`, { method: 'POST' })
-    await refresh()
+    await Promise.all([refresh(), refreshTimeline()])
   } catch (err: any) {
     actionError.value = err?.data?.message || err?.statusMessage || 'Gagal mengirim pengajuan.'
   } finally {
@@ -93,7 +78,7 @@ async function handleConfirmCancel() {
       // Draf dihapus, kembali ke index
       await router.push('/pengajuan')
     } else {
-      await refresh()
+      await Promise.all([refresh(), refreshTimeline()])
     }
   } catch (err: any) {
     actionError.value = err?.data?.message || err?.statusMessage || 'Gagal membatalkan pengajuan.'
@@ -135,27 +120,18 @@ async function handleConfirmCancel() {
       </div>
 
       <!-- KARTU STATUS UTAMA -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+      <div class="card space-y-4">
         <div class="flex items-start justify-between gap-3">
-          <div class="space-y-1 min-w-0">
+          <div class="space-y-1.5 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span
-                class="text-xs px-2.5 py-0.5 rounded-full font-bold border"
-                :class="statusBadge(req.status).class"
-              >
-                {{ statusBadge(req.status).label }}
-              </span>
+              <StatusBadge :status="req.status" />
               <span class="text-xs font-mono text-slate-500">
-                {{ req.requestNumber }}
+                #{{ req.requestNumber }}
               </span>
             </div>
 
-            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 pt-1">
-              <span
-                class="w-3.5 h-3.5 rounded-full shrink-0"
-                :style="{ backgroundColor: req.leaveType?.color || '#3b82f6' }"
-              ></span>
-              {{ req.leaveType?.name }}
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 pt-0.5">
+              <LeaveTypeChip :name="req.leaveType?.name" :color="req.leaveType?.color" />
             </h2>
 
             <p class="text-xs text-slate-500">
@@ -164,7 +140,7 @@ async function handleConfirmCancel() {
           </div>
 
           <div class="text-right shrink-0">
-            <span class="text-2xl font-black text-blue-600">{{ req.totalDays }}</span>
+            <span class="text-2xl font-black text-blue-600 tabular-nums">{{ req.totalDays }}</span>
             <span class="text-xs text-slate-500 block">total hari</span>
           </div>
         </div>
@@ -288,37 +264,25 @@ async function handleConfirmCancel() {
         </div>
       </div>
 
-      <!-- RIWAYAT & JEJAK PERSETUJUAN -->
-      <div v-if="req.histories?.length" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        <h3 class="font-bold text-slate-900 text-sm">
-          Riwayat Aktivitas & Approval
-        </h3>
+      <!-- RINGKASAN TAHAPAN (STEPPER) -->
+      <ApprovalStepper
+        v-if="timelineData?.steps?.length"
+        :steps="timelineData.steps"
+      />
 
-        <div class="space-y-3">
-          <div
-            v-for="h in req.histories"
-            :key="h.id"
-            class="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs space-y-1"
-          >
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-slate-900">{{ h.action }}</span>
-              <span class="text-slate-400">{{ dayjs(h.createdAt).format('DD/MM/YY HH:mm') }}</span>
-            </div>
-            <p v-if="h.actorName" class="text-slate-600">
-              Oleh: <span class="font-medium text-slate-800">{{ h.actorName }}</span>
-            </p>
-            <p v-if="h.note" class="text-slate-500 italic">{{ h.note }}</p>
-          </div>
-        </div>
-      </div>
+      <!-- LINI MASA RIWAYAT PERSETUJUAN (TIMELINE) -->
+      <RequestTimeline
+        :entries="timelineData?.timeline || []"
+        :loading="timelinePending"
+      />
 
       <!-- TOMBOL AKSI BAWAH (SESUAI STATUS) -->
-      <div class="pt-2 space-y-3">
+      <AppStickyActions v-if="req.status === 'DRAFT' || req.status === 'SUBMITTED' || req.status === 'IN_REVIEW'">
         <!-- Kasus DRAFT -->
-        <div v-if="req.status === 'DRAFT'" class="flex items-center gap-3">
+        <template v-if="req.status === 'DRAFT'">
           <button
             type="button"
-            class="flex-1 py-3 px-4 text-xs font-bold rounded-xl border border-red-300 text-red-600 bg-white hover:bg-red-50 transition active:scale-[0.98] disabled:opacity-50"
+            class="btn-ghost flex-1 text-red-600 border-red-200 hover:bg-red-50"
             :disabled="cancelling || submitting"
             @click="openCancelModal"
           >
@@ -327,27 +291,28 @@ async function handleConfirmCancel() {
 
           <button
             type="button"
-            class="flex-1 py-3 px-4 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition active:scale-[0.98] disabled:opacity-50"
+            class="btn-primary flex-1"
             :disabled="cancelling || submitting"
             @click="submitDraft"
           >
             {{ submitting ? 'Mengirim...' : 'Kirim Sekarang' }}
           </button>
-        </div>
+        </template>
 
         <!-- Kasus SUBMITTED / IN_REVIEW -->
-        <div v-else-if="req.status === 'SUBMITTED' || req.status === 'IN_REVIEW'">
+        <template v-else-if="req.status === 'SUBMITTED' || req.status === 'IN_REVIEW'">
           <button
             type="button"
-            class="w-full py-3 px-4 text-xs font-bold rounded-xl border border-red-300 text-red-600 bg-white hover:bg-red-50 transition active:scale-[0.98] disabled:opacity-50"
+            class="btn-ghost w-full text-red-600 border-red-200 hover:bg-red-50"
             :disabled="cancelling"
             @click="openCancelModal"
           >
             Batalkan Pengajuan
           </button>
-        </div>
-      </div>
+        </template>
+      </AppStickyActions>
     </div>
+
 
     <!-- MODAL KONFIRMASI PEMBATALAN -->
     <Teleport to="body">

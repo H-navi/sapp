@@ -179,25 +179,16 @@ function getSlaBadgeClass(task: any) {
     </div>
 
     <!-- State Memuat -->
-    <div v-if="pending && tasks.length === 0" class="card p-10 text-center text-slate-400 text-sm">
-      <div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-r-transparent mb-2"></div>
-      <p>Memuat daftar persetujuan...</p>
+    <div v-if="pending && tasks.length === 0" class="space-y-3">
+      <AppSkeleton type="card" :count="3" />
     </div>
 
     <!-- State Kosong -->
-    <div v-else-if="tasks.length === 0" class="card p-10 text-center space-y-3">
-      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <div>
-        <h3 class="text-base font-bold text-slate-900">Kotak Masuk Bersih</h3>
-        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-          Tidak ada permohonan izin yang sedang menunggu persetujuan Anda saat ini. Semua tugas telah terselesaikan.
-        </p>
-      </div>
-    </div>
+    <AppEmptyState
+      v-else-if="tasks.length === 0"
+      title="Kotak Masuk Bersih"
+      description="Tidak ada permohonan izin yang sedang menunggu persetujuan Anda saat ini."
+    />
 
     <!-- Daftar Kartu Tugas Persetujuan -->
     <div v-else class="space-y-3">
@@ -205,22 +196,21 @@ function getSlaBadgeClass(task: any) {
         v-for="task in tasks"
         :key="task.taskId"
         :to="`/approval/${task.taskId}`"
-        class="card block hover:border-brand-400 hover:shadow-md transition-all active:scale-[0.99] p-4 sm:p-5"
+        class="card block hover:border-blue-400 hover:shadow-md transition-all active:scale-[0.99] p-4 sm:p-5"
       >
         <div class="flex items-start justify-between gap-3">
           <!-- Info Pemohon & Judul Izin -->
-          <div class="space-y-1">
+          <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span
-                class="badge border text-[11px]"
-                :class="getSlaBadgeClass(task)"
-              >
-                {{ formatSlaLabel(task) }}
-              </span>
+              <CountdownLabel
+                :due-at="task.dueAt"
+                :remaining-seconds="task.remainingSeconds"
+                :is-overdue="task.isOverdue"
+              />
 
               <span
                 v-if="task.isDelegate"
-                class="badge bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-semibold"
+                class="badge bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-semibold"
               >
                 Mewakili Delegasi
               </span>
@@ -240,14 +230,12 @@ function getSlaBadgeClass(task: any) {
 
           <!-- Indikator Jenis Izin -->
           <div class="text-right flex-shrink-0">
-            <span
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-xs"
-              :style="{ backgroundColor: task.leaveType.color || '#3b82f6' }"
-            >
-              {{ task.leaveType.name }}
-            </span>
-            <p class="text-xs font-semibold text-slate-700 mt-1.5">
-              {{ task.workingDays }} Hari Kerja
+            <LeaveTypeChip
+              :name="task.leaveType.name"
+              :color="task.leaveType.color"
+            />
+            <p class="text-xs font-semibold text-blue-700 mt-1.5 tabular-nums">
+              {{ task.workingDays }} hari kerja
             </p>
           </div>
         </div>
@@ -266,11 +254,8 @@ function getSlaBadgeClass(task: any) {
             </span>
           </div>
 
-          <div class="flex items-center gap-1 text-brand-600 font-semibold text-xs sm:ml-auto">
-            <span>Tinjau Detail</span>
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+          <div class="flex items-center gap-1 text-blue-700 font-semibold text-xs sm:ml-auto">
+            <span>Tinjau</span>
           </div>
         </div>
 
@@ -282,3 +267,4 @@ function getSlaBadgeClass(task: any) {
     </div>
   </div>
 </template>
+

@@ -43,20 +43,6 @@ const todayFormatted = computed(() => {
   return dayjs().format('dddd, D MMMM YYYY')
 })
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case 'APPROVED':
-      return { label: 'Disetujui', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
-    case 'REJECTED':
-      return { label: 'Ditolak', class: 'bg-rose-50 text-rose-700 border-rose-200' }
-    case 'IN_REVIEW':
-      return { label: 'Sedang Ditinjau', class: 'bg-amber-50 text-amber-800 border-amber-200' }
-    case 'SUBMITTED':
-      return { label: 'Diajukan', class: 'bg-blue-50 text-blue-700 border-blue-200' }
-    default:
-      return { label: status, class: 'bg-slate-100 text-slate-700 border-slate-200' }
-  }
-}
 </script>
 
 <template>
@@ -347,39 +333,35 @@ function getStatusBadge(status: string) {
         </NuxtLink>
       </div>
 
-      <div class="card overflow-hidden divide-y divide-slate-100">
+      <div class="card overflow-hidden divide-y divide-slate-100 p-0">
         <div
           v-for="req in recentRequests"
           :key="req.id"
           class="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/80 transition"
         >
-          <div class="space-y-1">
+          <div class="space-y-1 min-w-0">
             <div class="flex items-center gap-2">
               <span class="font-mono text-xs font-semibold text-slate-400">#{{ req.requestNumber }}</span>
-              <span
-                class="badge border text-[11px] font-bold"
-                :class="getStatusBadge(req.status).class"
-              >
-                {{ getStatusBadge(req.status).label }}
-              </span>
+              <StatusBadge :status="req.status" size="sm" />
             </div>
-            <h4 class="text-sm font-bold text-slate-900">
+            <h4 class="text-sm font-bold text-slate-900 truncate">
               {{ req.leaveTypeName || 'Izin Pegawai' }}
             </h4>
-            <p class="text-xs text-slate-500">
+            <p class="text-xs text-slate-500 tabular-nums">
               {{ dayjs(req.startDate).format('D MMM YYYY') }} s.d. {{ dayjs(req.endDate).format('D MMM YYYY') }}
-              · {{ req.workingDays }} Hari Kerja
+              · {{ req.workingDays }} hari kerja
             </p>
           </div>
 
           <NuxtLink
             :to="`/pengajuan/${req.id}`"
-            class="btn-ghost text-xs px-3 py-1.5"
+            class="btn-ghost text-xs px-3 py-1.5 shrink-0"
           >
             Detail
           </NuxtLink>
         </div>
       </div>
+
     </div>
   </div>
 </template>
