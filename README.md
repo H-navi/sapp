@@ -19,6 +19,46 @@ SAPP (*AutoLeave*) adalah aplikasi modern berbasis web yang dirancang untuk meng
 
 ---
 
+## 📸 Pratinjau Antarmuka Aplikasi (Screenshots)
+
+### 🖥️ Dasbor & Administrasi (Tampilan Desktop)
+
+| Dasbor Analisis & Kalender Cuti | Pemantauan & Intervensi Admin |
+| :---: | :---: |
+| [![Dasbor Laporan](docs/screenshots/desktop-dashboard-laporan.png)](docs/screenshots/desktop-dashboard-laporan.png) | [![Admin Pengajuan](docs/screenshots/desktop-admin-pengajuan.png)](docs/screenshots/desktop-admin-pengajuan.png) |
+| *Visualisasi rasio cuti, tren bulanan, dan kalender tim* | *Pemantauan pengajuan real-time & intervensi override admin* |
+
+| Visual Workflow Builder | Manajemen Template Notifikasi Multi-Kanal |
+| :---: | :---: |
+| [![Workflow Builder](docs/screenshots/desktop-workflow-builder.png)](docs/screenshots/desktop-workflow-builder.png) | [![Template Notifikasi](docs/screenshots/desktop-notification-templates.png)](docs/screenshots/desktop-notification-templates.png) |
+| *Konfigurasi alur approval bertingkat (SLA, quorum, eskalasi)* | *Editor template email & Telegram dengan pratinjau live token* |
+
+### 📱 Antarmuka Mobile-First & Dukungan Dwibahasa (ID / EN)
+
+| Beranda Pegawai (Bahasa Indonesia) | Employee Home (English) |
+| :---: | :---: |
+| <a href="docs/screenshots/mobile-beranda-id.png"><img src="docs/screenshots/mobile-beranda-id.png" width="340" alt="Beranda ID" /></a> | <a href="docs/screenshots/mobile-beranda-en.png"><img src="docs/screenshots/mobile-beranda-en.png" width="340" alt="Beranda EN" /></a> |
+| *Ringkasan kuota, status pengajuan, dan aksi cepat (ID)* | *Leave quota balance, active requests, and quick actions (EN)* |
+
+| Masuk Akun (ID) | Sign In (EN) | Preferensi Bahasa & Profil |
+| :---: | :---: | :---: |
+| <a href="docs/screenshots/mobile-login-id.png"><img src="docs/screenshots/mobile-login-id.png" width="220" alt="Login ID" /></a> | <a href="docs/screenshots/mobile-login-en.png"><img src="docs/screenshots/mobile-login-en.png" width="220" alt="Login EN" /></a> | <a href="docs/screenshots/mobile-profil-bahasa.png" width="220" alt="Profil EN" /></a> |
+| *Halaman masuk dalam Bahasa Indonesia* | *Sign in localized in English* | *Pengaturan preferensi bahasa & akun* |
+
+### 📋 Pengajuan Mandiri, Approval & Integrasi Bot Telegram
+
+| Formulir Pengajuan Izin / Cuti | Kotak Masuk Approval (Approver) | Kalender Tim & Hari Libur |
+| :---: | :---: | :---: |
+| <a href="docs/screenshots/mobile-pengajuan-form.png"><img src="docs/screenshots/mobile-pengajuan-form.png" width="220" alt="Form Pengajuan" /></a> | <a href="docs/screenshots/mobile-approval-inbox.png"><img src="docs/screenshots/mobile-approval-inbox.png" width="220" alt="Approval Inbox" /></a> | <a href="docs/screenshots/mobile-kalender-tim.png"><img src="docs/screenshots/mobile-kalender-tim.png" width="220" alt="Kalender Tim" /></a> |
+| *Validasi 20 aturan & hitung hari kerja otomatis* | *Kotak masuk terpadu dengan hitung mundur SLA* | *Visibilitas cuti rekan tim dan libur nasional* |
+
+| Pratinjau Live Template Notifikasi | Modal Pairing Telegram Bot |
+| :---: | :---: |
+| [![Live Preview](docs/screenshots/desktop-template-preview.png)](docs/screenshots/desktop-template-preview.png) | [![Telegram Pairing Modal](docs/screenshots/telegram-pairing-modal.png)](docs/screenshots/telegram-pairing-modal.png) |
+| *Pratinjau pesan otomatis dengan token dinamis* | *Pairing akun Telegram instan via scan QR & kode 6 digit* |
+
+---
+
 ## 🚀 Panduan Instalasi & Menjalankan Aplikasi
 
 ### 1. Prasyarat Sistem

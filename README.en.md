@@ -19,6 +19,46 @@ AutoLeave (SAPP) is a modern, enterprise-grade web application designed to autom
 
 ---
 
+## 📸 Application Screenshots
+
+### 🖥️ Dashboard & Administration (Desktop View)
+
+| HR Analytics & Leave Calendar | Admin Leave Monitoring & Intervention |
+| :---: | :---: |
+| [![Analytics Dashboard](docs/screenshots/desktop-dashboard-laporan.png)](docs/screenshots/desktop-dashboard-laporan.png) | [![Admin Monitoring](docs/screenshots/desktop-admin-pengajuan.png)](docs/screenshots/desktop-admin-pengajuan.png) |
+| *Visual leave breakdown, monthly trends, and department calendar* | *Real-time leave request monitoring with administrative override controls* |
+
+| Visual Workflow Builder | Multi-Channel Notification Templates |
+| :---: | :---: |
+| [![Workflow Builder](docs/screenshots/desktop-workflow-builder.png)](docs/screenshots/desktop-workflow-builder.png) | [![Notification Templates](docs/screenshots/desktop-notification-templates.png)](docs/screenshots/desktop-notification-templates.png) |
+| *Multi-step approval configuration (SLA deadlines, quorums, escalations)* | *Email & Telegram template editor with live dynamic variable tokens* |
+
+### 📱 Mobile-First Interface & Bilingual Support (EN / ID)
+
+| Employee Home (English) | Beranda Pegawai (Bahasa Indonesia) |
+| :---: | :---: |
+| <a href="docs/screenshots/mobile-beranda-en.png"><img src="docs/screenshots/mobile-beranda-en.png" width="340" alt="Home EN" /></a> | <a href="docs/screenshots/mobile-beranda-id.png"><img src="docs/screenshots/mobile-beranda-id.png" width="340" alt="Home ID" /></a> |
+| *Leave quota balance, active requests, and quick actions (EN)* | *Ringkasan kuota, status pengajuan, dan aksi cepat (ID)* |
+
+| Sign In (EN) | Masuk Akun (ID) | Language Preferences & Profile |
+| :---: | :---: | :---: |
+| <a href="docs/screenshots/mobile-login-en.png"><img src="docs/screenshots/mobile-login-en.png" width="220" alt="Login EN" /></a> | <a href="docs/screenshots/mobile-login-id.png"><img src="docs/screenshots/mobile-login-id.png" width="220" alt="Login ID" /></a> | <a href="docs/screenshots/mobile-profil-bahasa.png"><img src="docs/screenshots/mobile-profil-bahasa.png" width="220" alt="Profile EN" /></a> |
+| *Sign in screen localized in English* | *Halaman masuk dalam Bahasa Indonesia* | *Bilingual language switcher & Telegram link preferences* |
+
+### 📋 Self-Service Leave Requests, Approvals & Telegram Bot
+
+| Leave Request Application Form | Approval Inbox (Approver View) | Team Calendar & Public Holidays |
+| :---: | :---: | :---: |
+| <a href="docs/screenshots/mobile-pengajuan-form.png"><img src="docs/screenshots/mobile-pengajuan-form.png" width="220" alt="Leave Form" /></a> | <a href="docs/screenshots/mobile-approval-inbox.png"><img src="docs/screenshots/mobile-approval-inbox.png" width="220" alt="Approval Inbox" /></a> | <a href="docs/screenshots/mobile-kalender-tim.png"><img src="docs/screenshots/mobile-kalender-tim.png" width="220" alt="Team Calendar" /></a> |
+| *Instant 20-rule pre-validation & business day calculation* | *Unified inbox with real-time dynamic SLA countdowns* | *Colleague leave visibility & official national holidays* |
+
+| Live Notification Template Preview | Telegram Bot Pairing Modal |
+| :---: | :---: |
+| [![Live Preview](docs/screenshots/desktop-template-preview.png)](docs/screenshots/desktop-template-preview.png) | [![Telegram Pairing Modal](docs/screenshots/telegram-pairing-modal.png)](docs/screenshots/telegram-pairing-modal.png) |
+| *Real-time message preview with simulated token replacements* | *Instant Telegram bot linking via QR code scan & 6-digit code* |
+
+---
+
 ## 🚀 Getting Started & Installation Guide
 
 ### 1. System Prerequisites
