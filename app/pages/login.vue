@@ -3,12 +3,13 @@ definePageMeta({
   layout: 'auth',
 })
 
-useHead({
-  title: 'Masuk',
-})
-
+const { t } = useI18n()
 const { login } = useAuth()
 const route = useRoute()
+
+useHead({
+  title: computed(() => t('auth.signInTitle')),
+})
 
 const identifier = ref('')
 const password = ref('')
@@ -18,7 +19,7 @@ const errorMessage = ref('')
 async function handleLogin() {
   errorMessage.value = ''
   if (!identifier.value || !password.value) {
-    errorMessage.value = 'Email/username dan password wajib diisi.'
+    errorMessage.value = t('auth.requiredFields')
     return
   }
 
@@ -30,7 +31,7 @@ async function handleLogin() {
       await navigateTo(redirect)
     }
   } catch (err: any) {
-    errorMessage.value = err?.data?.message || err?.statusMessage || 'Gagal masuk. Periksa kembali data Anda.'
+    errorMessage.value = err?.data?.message || err?.statusMessage || t('auth.loginFailed')
   } finally {
     isLoading.value = false
   }
@@ -45,8 +46,8 @@ async function handleLogin() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </div>
-      <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Masuk ke Akun</h1>
-      <p class="mt-1 text-sm text-slate-500">Sistem Auto Approval Perizinan Pegawai</p>
+      <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{{ t('auth.signInTitle') }}</h1>
+      <p class="mt-1 text-sm text-slate-500">{{ t('auth.signInSubtitle') }}</p>
     </div>
 
     <div v-if="errorMessage" class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -55,7 +56,7 @@ async function handleLogin() {
 
     <form class="space-y-4" @submit.prevent="handleLogin">
       <div>
-        <label for="identifier" class="label">Email atau Username</label>
+        <label for="identifier" class="label">{{ t('auth.emailOrUsername') }}</label>
         <input
           id="identifier"
           v-model="identifier"
@@ -63,13 +64,13 @@ async function handleLogin() {
           autocomplete="username"
           inputmode="email"
           required
-          placeholder="nama@perusahaan.co.id atau username"
+          :placeholder="t('auth.emailOrUsername')"
           class="input"
         />
       </div>
 
       <div>
-        <label for="password" class="label">Kata Sandi</label>
+        <label for="password" class="label">{{ t('auth.password') }}</label>
         <input
           id="password"
           v-model="password"
@@ -91,9 +92,9 @@ async function handleLogin() {
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          Memproses...
+          {{ t('auth.signingIn') }}
         </span>
-        <span v-else>Masuk</span>
+        <span v-else>{{ t('auth.signInButton') }}</span>
       </button>
     </form>
   </div>

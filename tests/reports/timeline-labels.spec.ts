@@ -136,4 +136,25 @@ describe('Timeline Labels & Formatting (Task 11)', () => {
     }
     expect(formatTimelineTitle(autoApproveEntry)).toBe('Disetujui otomatis oleh sistem')
   })
+
+  it('memformat judul lini masa English dengan parameter locale="en"', () => {
+    const autoApproveEntry: TimelineEntry = {
+      id: 8,
+      requestId: 'req-1',
+      createdAt: new Date().toISOString(),
+      action: 'AUTO_APPROVED',
+      actorType: 'SYSTEM',
+    }
+    expect(formatTimelineTitle(autoApproveEntry, 'en')).toBe('Automatically approved by system')
+
+    const submitEntry: TimelineEntry = {
+      id: 9,
+      requestId: 'req-1',
+      createdAt: new Date().toISOString(),
+      action: 'SUBMITTED',
+      actorType: 'USER',
+      actorName: 'John Doe',
+    }
+    expect(formatTimelineTitle(submitEntry, 'en')).toBe('Request submitted by John Doe')
+  })
 })

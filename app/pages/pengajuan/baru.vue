@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 
+const { t, locale } = useI18n()
+
 useHead({
-  title: 'Buat Pengajuan Baru',
+  title: computed(() => t('requests.newRequest')),
 })
 
 const router = useRouter()
@@ -206,8 +208,8 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
 <template>
   <div class="space-y-6 max-w-xl mx-auto pb-28">
     <AppPageHeader
-      title="Buat Pengajuan Baru"
-      subtitle="Lengkapi formulir permohonan perizinan atau cuti pegawai."
+      :title="t('requests.newRequest')"
+      :subtitle="t('requests.submitConfirmMsg')"
     />
 
     <!-- Error Hak Pengajuan -->
@@ -225,7 +227,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
         {{ (optionsError as any)?.data?.message || optionsError?.statusMessage || 'Anda saat ini tidak berhak membuat pengajuan perizinan. Silakan hubungi bagian HRD atau Administrator.' }}
       </p>
       <NuxtLink to="/pengajuan" class="inline-block mt-2 font-semibold text-red-800 underline">
-        Kembali ke Daftar Pengajuan
+        {{ t('common.back') }}
       </NuxtLink>
     </div>
 
@@ -236,10 +238,10 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
             <span class="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs">1</span>
-            Pilih Jenis Izin
+            {{ t('requests.selectLeaveType') }}
           </h2>
           <span v-if="currentQuota" class="text-xs font-semibold text-slate-500 tabular-nums">
-            Sisa Kuota: <span class="text-blue-600 font-bold">{{ currentQuota.balance }}</span> hari
+            {{ t('home.remainingDays') }}: <span class="text-blue-600 font-bold">{{ currentQuota.balance }}</span> {{ t('common.days').toLowerCase() }}
           </span>
         </div>
 
@@ -483,7 +485,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
           :disabled="submitting"
           @click="handleSubmit('draft')"
         >
-          Simpan Draf
+          {{ locale === 'en' ? 'Save Draft' : 'Simpan Draf' }}
         </button>
 
         <button
@@ -492,7 +494,7 @@ async function handleSubmit(actionType: 'draft' | 'submit') {
           :disabled="submitting || isBlocked"
           @click="handleSubmit('submit')"
         >
-          {{ submitting ? 'Mengirim...' : 'Kirim Pengajuan' }}
+          {{ submitting ? t('common.processing') : t('common.submit') }}
         </button>
       </AppStickyActions>
     </form>

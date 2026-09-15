@@ -1,6 +1,8 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 useHead({
-  title: 'Pengajuan Perizinan',
+  title: computed(() => t('requests.myRequests')),
 })
 
 const route = useRoute()
@@ -9,15 +11,15 @@ const selectedStatus = ref<string>((route.query.status as string) || '')
 const page = ref(Number(route.query.page) || 1)
 const perPage = ref(20)
 
-const statusFilters = [
-  { label: 'Semua', value: '' },
-  { label: 'Menunggu', value: 'SUBMITTED' },
-  { label: 'Sedang Direviu', value: 'IN_REVIEW' },
-  { label: 'Disetujui', value: 'APPROVED' },
-  { label: 'Ditolak', value: 'REJECTED' },
-  { label: 'Draf', value: 'DRAFT' },
-  { label: 'Dibatalkan', value: 'CANCELLED' },
-]
+const statusFilters = computed(() => [
+  { label: t('common.all'), value: '' },
+  { label: t('status.pending'), value: 'SUBMITTED' },
+  { label: t('status.inReview'), value: 'IN_REVIEW' },
+  { label: t('status.approved'), value: 'APPROVED' },
+  { label: t('status.rejected'), value: 'REJECTED' },
+  { label: t('status.draft'), value: 'DRAFT' },
+  { label: t('status.cancelled'), value: 'CANCELLED' },
+])
 
 const { data: requestsData, pending, refresh } = await useFetch<{
   data: {
@@ -44,8 +46,8 @@ function setFilter(val: string) {
 <template>
   <div class="space-y-5">
     <AppPageHeader
-      title="Pengajuan Perizinan"
-      subtitle="Kelola dan pantau seluruh permohonan izin atau cuti Anda."
+      :title="t('requests.myRequests')"
+      :subtitle="t('home.welcomeBack')"
     >
       <template #actions>
         <NuxtLink
@@ -55,7 +57,7 @@ function setFilter(val: string) {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Buat Pengajuan</span>
+          <span>{{ t('requests.newRequest') }}</span>
         </NuxtLink>
       </template>
     </AppPageHeader>
@@ -86,37 +88,51 @@ function setFilter(val: string) {
     <!-- Empty State -->
     <AppEmptyState
       v-else-if="!requestsData?.data?.items?.length"
-      title="Belum ada pengajuan"
-      description="Anda belum memiliki daftar pengajuan perizinan dengan filter ini."
+      :title="t('common.noData')"
+      :description="t('home.noRecentRequests')"
     >
       <template #action>
         <NuxtLink
           to="/pengajuan/baru"
           class="btn-primary"
         >
-          Buat Pengajuan Pertama
+          {{ t('requests.newRequest') }}
         </NuxtLink>
       </template>
     </AppEmptyState>
 
-    <!-- Cards Stack (Mobile-First 320px-ready) -->
+    <!-- Request Cards Grid / Feed -->
     <div v-else class="space-y-3">
       <RequestCard
-        v-for="r in requestsData.data.items"
-        :key="r.id"
-        :request="r"
-        :show-requester="false"
+        v-for="req in requestsData.data.items"
+        :key="req.id"
+        :request="req"
       />
 
-      <!-- Pagination -->
-      <AppPagination
-        v-if="requestsData.data.totalPages > 1"
-        :page="page"
-        :total-pages="requestsData.data.totalPages"
-        :total="requestsData.data.total"
-        @change="(p) => (page = p)"
-      />
+      <!-- Pagination Controls -->
+      <div v-if="requestsData.data.totalPages > 1" class="pt-4 flex items-center justify-between text-xs text-slate-500">
+        <div>
+          Halaman {{ requestsData.data.page }} dari {{ requestsData.data.totalPages }} (Total {{ requestsData.data.total }})
+        </div>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            class="btn-secondary text-xs px-3 py-1.5"
+            :disabled="page <= 1"
+            @click="page--"
+          >
+            Sebelumnya
+          </button>
+          <button
+            type="button"
+            class="btn-secondary text-xs px-3 py-1.5"
+            :disabled="page >= requestsData.data.totalPages"
+            @click="page++"
+          >
+            Selanjutnya
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
-

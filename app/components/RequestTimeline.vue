@@ -12,6 +12,8 @@ const props = defineProps<{
   loading?: boolean
 }>()
 
+const { locale } = useI18n()
+
 const isExpanded = ref(false)
 
 // Jika riwayat lebih dari 15 entri, tampilkan 5 terbaru kecuali jika pengguna menekan tombol buka
@@ -30,14 +32,14 @@ const hiddenCount = computed(() => {
 
 function getRelativeTime(d: string | Date): string {
   const diff = Date.now() - new Date(d).getTime()
-  if (diff < 0) return 'Baru saja'
+  if (diff < 0) return locale.value === 'en' ? 'Just now' : 'Baru saja'
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'Baru saja'
-  if (mins < 60) return `${mins} menit lalu`
+  if (mins < 1) return locale.value === 'en' ? 'Just now' : 'Baru saja'
+  if (mins < 60) return locale.value === 'en' ? `${mins}m ago` : `${mins} menit lalu`
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} jam lalu`
+  if (hours < 24) return locale.value === 'en' ? `${hours}h ago` : `${hours} jam lalu`
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days} hari lalu`
+  if (days < 30) return locale.value === 'en' ? `${days}d ago` : `${days} hari lalu`
   return dayjs(d).format('D MMM YYYY')
 }
 
@@ -143,7 +145,7 @@ function getActionDef(action: string) {
 
                 <!-- Action Title -->
                 <h4 class="text-sm font-semibold text-slate-800">
-                  {{ formatTimelineTitle(entry) }}
+                  {{ formatTimelineTitle(entry, locale) }}
                 </h4>
               </div>
 

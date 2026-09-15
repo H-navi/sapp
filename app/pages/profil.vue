@@ -1,9 +1,11 @@
 <script setup lang="ts">
+const { t } = useI18n()
+const { user, logout } = useAuth()
+
 useHead({
-  title: 'Profil Saya',
+  title: computed(() => t('profile.myProfile')),
 })
 
-const { user, logout } = useAuth()
 const isLoggingOut = ref(false)
 
 // Status Telegram
@@ -69,7 +71,7 @@ async function openTelegramModal() {
         clearInterval(pollTimer)
         pollTimer = null
         showTgModal.value = false
-        showToast('Akun Telegram berhasil terhubung! Anda kini siap menerima notifikasi.', 'success')
+        showToast(t('profile.telegramLinked'), 'success')
       }
     }, 3000)
   } catch (err: any) {
@@ -107,7 +109,7 @@ async function handleUnlinkTelegram() {
   try {
     await $fetch('/api/profile/telegram/unlink', { method: 'DELETE' })
     await refreshTgStatus()
-    showToast('Akun Telegram berhasil diputuskan.', 'info')
+    showToast(t('profile.telegramNotLinked'), 'info')
   } catch (err: any) {
     showToast(err?.data?.message || err?.message || 'Gagal memutuskan sambungan Telegram.', 'error')
   } finally {
@@ -158,13 +160,13 @@ async function handleSavePreferences() {
       },
     })
     saveSuccess.value = true
-    showToast('Preferensi notifikasi berhasil disimpan.', 'success')
+    showToast(t('common.success'), 'success')
     setTimeout(() => {
       saveSuccess.value = false
     }, 3000)
     await refreshPrefs()
   } catch (err: any) {
-    showToast(err?.data?.message || 'Gagal menyimpan preferensi', 'error')
+    showToast(err?.data?.message || t('common.error'), 'error')
   } finally {
     isSavingPrefs.value = false
   }
@@ -181,7 +183,7 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="space-y-5 pb-12">
+  <div class="space-y-5 pb-12 max-w-4xl mx-auto">
     <!-- Floating Toast Notification -->
     <transition
       enter-active-class="transform ease-out duration-300 transition"
@@ -206,7 +208,7 @@ async function handleLogout() {
     </transition>
 
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-bold text-slate-900">Profil Saya</h1>
+      <h1 class="text-xl font-bold text-slate-900">{{ t('profile.myProfile') }}</h1>
     </div>
 
     <!-- Info Utama Akun -->
@@ -216,7 +218,7 @@ async function handleLogout() {
           {{ user?.fullName?.charAt(0).toUpperCase() ?? 'U' }}
         </div>
         <div>
-          <h2 class="font-semibold text-slate-900 text-base">{{ user?.fullName ?? 'Pengguna' }}</h2>
+          <h2 class="font-semibold text-slate-900 text-base">{{ user?.fullName ?? 'User' }}</h2>
           <p class="text-xs text-slate-500">@{{ user?.username ?? '-' }}</p>
         </div>
       </div>
@@ -237,11 +239,11 @@ async function handleLogout() {
 
         <div>
           <p class="text-xs text-slate-500">ID Pegawai</p>
-          <p class="font-medium text-slate-800 text-xs mt-1">{{ user?.employeeId ? user.employeeId.slice(0, 8) + '...' : 'Akun Sistem' }}</p>
+          <p class="font-medium text-slate-800 text-xs mt-1">{{ user?.employeeId ? user.employeeId.slice(0, 8) + '...' : 'System Account' }}</p>
         </div>
 
         <div>
-          <p class="text-xs text-slate-500">Level Jabatan</p>
+          <p class="text-xs text-slate-500">{{ t('profile.position') }}</p>
           <p class="font-medium text-slate-800 text-xs mt-1">{{ user?.positionLevel ? 'Level ' + user.positionLevel : '-' }}</p>
         </div>
 
@@ -254,21 +256,36 @@ async function handleLogout() {
       </div>
     </div>
 
+    <!-- Preferensi Bahasa (Language Switcher Card) -->
+    <div class="card space-y-4">
+      <div class="border-b border-slate-100 pb-3">
+        <h3 class="font-semibold text-slate-900 text-sm flex items-center gap-2">
+          <span>🌐</span>
+          <span>{{ t('profile.languagePrefs') }}</span>
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          {{ t('profile.languagePrefsDesc') }}
+        </p>
+      </div>
+
+      <AppLanguageSwitcher variant="card" />
+    </div>
+
     <!-- Integrasi Telegram Notifikasi -->
     <div class="card space-y-4">
       <div class="flex items-start justify-between">
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="font-semibold text-slate-900 text-sm">Notifikasi Telegram Bot</h3>
+            <h3 class="font-semibold text-slate-900 text-sm">{{ t('profile.telegramNotif') }}</h3>
             <span
               class="badge text-[11px] font-bold"
               :class="tgStatus?.isLinked ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200'"
             >
-              {{ tgStatus?.isLinked ? 'Terhubung' : 'Belum Terhubung' }}
+              {{ tgStatus?.isLinked ? t('profile.telegramLinked') : t('profile.telegramNotLinked') }}
             </span>
           </div>
           <p class="text-xs text-slate-500 mt-0.5">
-            Terima pemberitahuan tugas approval, pengingat SLA, dan hasil izin langsung di Telegram
+            {{ t('profile.telegramNotifDesc') }}
           </p>
         </div>
       </div>
@@ -278,12 +295,12 @@ async function handleLogout() {
         <div>
           <div class="flex items-center gap-2">
             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-            <span class="font-bold text-slate-800">Akun Telegram Aktif:</span>
+            <span class="font-bold text-slate-800">{{ t('profile.telegramLinked') }}:</span>
             <code class="font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-slate-700 font-semibold">
               Chat ID: {{ tgStatus.chatId }}
             </code>
           </div>
-          <p class="text-slate-500 mt-1">Notifikasi otomatis siap dikirim ke obrolan Telegram Anda.</p>
+          <p class="text-slate-500 mt-1">Notifikasi otomatis aktif ke obrolan Telegram Anda.</p>
         </div>
         <div class="flex items-center gap-2 self-start sm:self-auto">
           <button
@@ -295,7 +312,7 @@ async function handleLogout() {
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            {{ isTestingTg ? 'Mengirim...' : 'Kirim Pesan Uji' }}
+            {{ isTestingTg ? t('common.processing') : t('profile.testTelegram') }}
           </button>
           <button
             type="button"
@@ -303,7 +320,7 @@ async function handleLogout() {
             class="text-rose-600 hover:text-rose-800 font-medium px-2 py-1.5 text-xs"
             @click="handleUnlinkTelegram"
           >
-            {{ isUnlinking ? 'Memutuskan...' : 'Putuskan Sambungan' }}
+            {{ isUnlinking ? t('common.processing') : t('profile.unlinkTelegram') }}
           </button>
         </div>
       </div>
@@ -321,7 +338,7 @@ async function handleLogout() {
           <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.19 3.37-1.4 3.75-1.4.08 0 .28.02.4.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
           </svg>
-          Hubungkan Telegram
+          {{ t('profile.linkTelegram') }}
         </button>
       </div>
     </div>
@@ -330,7 +347,7 @@ async function handleLogout() {
     <div class="card space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h3 class="font-semibold text-slate-900 text-sm">Preferensi Notifikasi & Uji Coba Email</h3>
+          <h3 class="font-semibold text-slate-900 text-sm">{{ t('profile.notificationPrefs') }}</h3>
           <p class="text-xs text-slate-500">Pilih saluran yang ingin Anda aktifkan dan uji pengiriman ke email Anda</p>
         </div>
       </div>
@@ -339,8 +356,8 @@ async function handleLogout() {
       <div class="space-y-3 text-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2 border-b border-slate-100 pb-3">
           <div>
-            <span class="font-medium text-slate-800 text-xs sm:text-sm">Notifikasi Email</span>
-            <p class="text-xs text-slate-500">Kirim email untuk pengajuan baru, giliran persetujuan, dan keputusan</p>
+            <span class="font-medium text-slate-800 text-xs sm:text-sm">{{ t('profile.emailNotif') }}</span>
+            <p class="text-xs text-slate-500">{{ t('profile.emailNotifDesc') }}</p>
           </div>
           <div class="flex items-center gap-3">
             <button
@@ -358,42 +375,65 @@ async function handleLogout() {
               >
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              {{ isTestingEmail ? 'Mengirim Email...' : 'Uji Kirim Email' }}
+              {{ isTestingEmail ? t('common.processing') : t('profile.testEmail') }}
             </button>
-            <input v-model="prefs.emailEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+            <input
+              v-model="prefs.emailEnabled"
+              type="checkbox"
+              class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
           </div>
         </div>
 
-        <label class="flex items-center justify-between py-2 cursor-pointer border-b border-slate-100 pb-3">
+        <!-- Telegram Notification Toggle -->
+        <div class="flex items-center justify-between py-2 border-b border-slate-100 pb-3">
           <div>
-            <span class="font-medium text-slate-800 text-xs sm:text-sm">Notifikasi Telegram</span>
-            <p class="text-xs text-slate-500">Kirim pesan Telegram langsung ke akun yang tertaut</p>
+            <span class="font-medium text-slate-800 text-xs sm:text-sm">{{ t('profile.telegramNotif') }}</span>
+            <p class="text-xs text-slate-500">{{ t('profile.telegramNotifDesc') }}</p>
           </div>
-          <input v-model="prefs.telegramEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
-        </label>
-
-        <div class="pt-2">
-          <label class="block font-medium text-slate-800 text-xs mb-1">Jam Tenang (Quiet Hours)</label>
-          <p class="text-xs text-slate-500 mb-2">Pemberitahuan pengingat pada rentang jam ini akan ditunda sampai jam tenang berakhir (kecuali hasil keputusan akhir yang selalu dikirim seketika).</p>
-          <div class="flex items-center gap-2">
-            <input v-model="prefs.quietHoursStart" type="time" class="input py-1 text-xs w-32" placeholder="22:00">
-            <span class="text-xs text-slate-400">sampai</span>
-            <input v-model="prefs.quietHoursEnd" type="time" class="input py-1 text-xs w-32" placeholder="06:00">
-          </div>
+          <input
+            v-model="prefs.telegramEnabled"
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
         </div>
 
-        <div class="pt-2 flex justify-end">
-          <button
-            class="btn btn-brand text-xs flex items-center gap-1.5"
-            :disabled="isSavingPrefs"
-            @click="handleSavePreferences"
-          >
-            <svg v-if="saveSuccess" class="h-4 w-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        <!-- Jam Tenang (Quiet Hours) -->
+        <div class="py-2 space-y-2">
+          <label class="block text-xs font-semibold text-slate-700">{{ t('profile.quietHours') }}</label>
+          <p class="text-xs text-slate-500">Notifikasi di jam ini akan ditunda sampai jam tenang berakhir.</p>
+          <div class="flex items-center gap-3 max-w-xs">
+            <input
+              v-model="prefs.quietHoursStart"
+              type="time"
+              class="input text-xs"
+            />
+            <span class="text-xs text-slate-400">s/d</span>
+            <input
+              v-model="prefs.quietHoursEnd"
+              type="time"
+              class="input text-xs"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button
+          type="button"
+          :disabled="isSavingPrefs"
+          class="btn-primary text-xs"
+          @click="handleSavePreferences"
+        >
+          <span v-if="isSavingPrefs" class="inline-flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            {{ isSavingPrefs ? 'Menyimpan...' : (saveSuccess ? 'Tersimpan!' : 'Simpan Pengaturan') }}
-          </button>
-        </div>
+            {{ t('common.processing') }}
+          </span>
+          <span v-else>{{ t('common.save') }}</span>
+        </button>
       </div>
     </div>
 
@@ -402,7 +442,7 @@ async function handleLogout() {
       <h3 class="font-semibold text-slate-900 text-sm">Keamanan Akun</h3>
       <div class="flex items-center justify-between py-1">
         <div>
-          <p class="text-sm font-medium text-slate-800">Kata Sandi</p>
+          <p class="text-sm font-medium text-slate-800">{{ t('auth.password') }}</p>
           <p class="text-xs text-slate-500">Perbarui kata sandi login Anda secara berkala</p>
         </div>
         <NuxtLink to="/ganti-password" class="btn-ghost text-xs px-3 py-1.5 border">
@@ -419,7 +459,7 @@ async function handleLogout() {
         class="btn border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 w-full"
         @click="handleLogout"
       >
-        {{ isLoggingOut ? 'Sedang keluar...' : 'Keluar dari Akun' }}
+        {{ isLoggingOut ? t('common.processing') : t('nav.logout') }}
       </button>
     </div>
 
@@ -428,7 +468,7 @@ async function handleLogout() {
       <div class="card w-full max-w-md p-6 space-y-4 shadow-2xl">
         <div class="flex items-start justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Hubungkan Akun Telegram</h3>
+            <h3 class="text-base font-bold text-slate-900">{{ t('profile.linkTelegram') }}</h3>
             <p class="text-xs text-slate-500">Ikuti langkah sederhana berikut untuk menautkan bot</p>
           </div>
           <button class="text-slate-400 hover:text-slate-600 text-lg font-bold" @click="closeTgModal">
@@ -454,8 +494,8 @@ async function handleLogout() {
             <p>{{ tgError }}</p>
           </div>
           <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary text-xs" @click="closeTgModal">Tutup</button>
-            <button class="btn btn-brand text-xs" @click="openTelegramModal">Coba Lagi</button>
+            <button class="btn btn-secondary text-xs" @click="closeTgModal">{{ t('common.close') }}</button>
+            <button class="btn btn-brand text-xs" @click="openTelegramModal">{{ t('common.retry') }}</button>
           </div>
         </div>
 
@@ -508,7 +548,7 @@ async function handleLogout() {
 
           <div class="flex justify-end pt-2">
             <button class="btn btn-secondary text-xs" @click="closeTgModal">
-              Tutup
+              {{ t('common.close') }}
             </button>
           </div>
         </div>

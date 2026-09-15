@@ -33,6 +33,8 @@ const props = withDefaults(
   }
 )
 
+const { t } = useI18n()
+
 function formatDateRange(start: string, end: string) {
   const s = dayjs(start).format('D MMM YYYY')
   const e = dayjs(end).format('D MMM YYYY')
@@ -54,7 +56,7 @@ function formatDateRange(start: string, end: string) {
       </div>
 
       <div class="text-xs font-semibold text-blue-700 tabular-nums">
-        {{ request.workingDays }} hari kerja
+        {{ request.workingDays }} {{ t('requests.workingDays').toLowerCase() }}
       </div>
     </div>
 
@@ -62,7 +64,7 @@ function formatDateRange(start: string, end: string) {
     <div class="space-y-1">
       <div class="flex items-center gap-2">
         <LeaveTypeChip
-          :name="request.leaveType?.name || 'Izin'"
+          :name="request.leaveType?.name || t('requests.leaveType')"
           :color="request.leaveType?.color"
         />
       </div>
@@ -80,7 +82,7 @@ function formatDateRange(start: string, end: string) {
       </div>
 
       <div v-if="request.currentStepName" class="text-[11px] text-slate-600 font-medium">
-        Tahap: {{ request.currentStepName }}
+        {{ request.currentStepName }}
       </div>
     </div>
   </NuxtLink>

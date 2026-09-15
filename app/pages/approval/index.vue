@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 
+const { t, locale } = useI18n()
+
 useHead({
-  title: 'Kotak Masuk Persetujuan · Sistem Perizinan Pegawai',
+  title: computed(() => `${t('approval.approvalInbox')} · ${t('nav.brandSubtitle')}`),
 })
 
 const activeTab = ref<'all' | 'urgent' | 'overdue' | 'delegated'>('all')
@@ -37,25 +39,25 @@ const countDelegated = computed(() => rawTasks.value.filter((t) => t.isDelegate)
 function formatSlaLabel(task: any) {
   if (task.isOverdue) {
     const mins = Math.max(1, Math.round(Math.abs(task.remainingSeconds || 0) / 60))
-    if (mins < 60) return `Terlambat ${mins} menit`
+    if (mins < 60) return locale.value === 'en' ? `Overdue by ${mins} mins` : `Terlambat ${mins} menit`
     const hours = Math.floor(mins / 60)
-    return `Terlambat ${hours} jam`
+    return locale.value === 'en' ? `Overdue by ${hours} hours` : `Terlambat ${hours} jam`
   }
-  if (!task.dueAt) return 'Tanpa Batas SLA'
+  if (!task.dueAt) return locale.value === 'en' ? 'No SLA Deadline' : 'Tanpa Batas SLA'
 
   const secs = task.remainingSeconds || 0
-  if (secs <= 0) return 'Batas Waktu Tiba'
+  if (secs <= 0) return locale.value === 'en' ? 'Deadline Reached' : 'Batas Waktu Tiba'
   const hours = Math.floor(secs / 3600)
   const mins = Math.floor((secs % 3600) / 60)
 
   if (hours > 24) {
     const days = Math.floor(hours / 24)
-    return `${days} hari lagi`
+    return locale.value === 'en' ? `${days} days left` : `${days} hari lagi`
   }
   if (hours > 0) {
-    return `${hours} jam ${mins} m lagi`
+    return locale.value === 'en' ? `${hours}h ${mins}m left` : `${hours} jam ${mins} m lagi`
   }
-  return `${mins} menit lagi`
+  return locale.value === 'en' ? `${mins} mins left` : `${mins} menit lagi`
 }
 
 function getSlaBadgeClass(task: any) {
@@ -75,10 +77,10 @@ function getSlaBadgeClass(task: any) {
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-xl font-black text-slate-900 tracking-tight sm:text-2xl">
-          Kotak Masuk Persetujuan
+          {{ t('approval.approvalInbox') }}
         </h1>
         <p class="text-xs text-slate-500 mt-0.5 sm:text-sm">
-          Tinjau dan tindak lanjuti pengajuan izin pegawai yang membutuhkan persetujuan Anda.
+          {{ t('approval.taskDetail') }}
         </p>
       </div>
 
@@ -91,7 +93,7 @@ function getSlaBadgeClass(task: any) {
           <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Riwayat
+          {{ t('approval.taskHistory') }}
         </NuxtLink>
 
         <NuxtLink
@@ -101,7 +103,7 @@ function getSlaBadgeClass(task: any) {
           <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
-          Delegasi
+          {{ t('approval.delegationTab') }}
           <span v-if="countDelegated > 0" class="badge bg-indigo-100 text-indigo-700 text-[10px] px-1.5 py-0.2">
             {{ countDelegated }}
           </span>
@@ -111,7 +113,7 @@ function getSlaBadgeClass(task: any) {
           type="button"
           class="btn-ghost text-xs p-2 text-slate-600 hover:text-slate-900"
           :disabled="pending"
-          title="Segarkan data"
+          :title="t('common.refresh')"
           @click="() => refresh()"
         >
           <svg
@@ -135,7 +137,7 @@ function getSlaBadgeClass(task: any) {
         :class="activeTab === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'"
         @click="activeTab = 'all'"
       >
-        Semua
+        {{ t('common.all') }}
         <span class="ml-1 opacity-80">({{ rawTasks.length }})</span>
       </button>
 
@@ -146,7 +148,7 @@ function getSlaBadgeClass(task: any) {
         @click="activeTab = 'urgent'"
       >
         <span class="h-2 w-2 rounded-full bg-amber-400"></span>
-        Mendesak (&lt; 4 Jam)
+        {{ locale === 'en' ? 'Urgent (< 4 Hrs)' : 'Mendesak (< 4 Jam)' }}
         <span v-if="countUrgent > 0" class="badge bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.5 ml-0.5">
           {{ countUrgent }}
         </span>
@@ -159,7 +161,7 @@ function getSlaBadgeClass(task: any) {
         @click="activeTab = 'overdue'"
       >
         <span class="h-2 w-2 rounded-full bg-rose-400"></span>
-        Terlambat SLA
+        {{ locale === 'en' ? 'SLA Overdue' : 'Terlambat SLA' }}
         <span v-if="countOverdue > 0" class="badge bg-rose-100 text-rose-900 text-[10px] px-1.5 py-0.5 ml-0.5">
           {{ countOverdue }}
         </span>
@@ -171,7 +173,7 @@ function getSlaBadgeClass(task: any) {
         :class="activeTab === 'delegated' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'"
         @click="activeTab = 'delegated'"
       >
-        Mewakili Delegasi
+        {{ locale === 'en' ? 'Delegated' : 'Mewakili Delegasi' }}
         <span v-if="countDelegated > 0" class="badge bg-indigo-100 text-indigo-900 text-[10px] px-1.5 py-0.5 ml-0.5">
           {{ countDelegated }}
         </span>
@@ -186,8 +188,8 @@ function getSlaBadgeClass(task: any) {
     <!-- State Kosong -->
     <AppEmptyState
       v-else-if="tasks.length === 0"
-      title="Kotak Masuk Bersih"
-      description="Tidak ada permohonan izin yang sedang menunggu persetujuan Anda saat ini."
+      :title="locale === 'en' ? 'Inbox Zero' : 'Kotak Masuk Bersih'"
+      :description="locale === 'en' ? 'No pending leave requests requiring your review.' : 'Tidak ada permohonan izin yang sedang menunggu persetujuan Anda saat ini.'"
     />
 
     <!-- Daftar Kartu Tugas Persetujuan -->
@@ -212,7 +214,7 @@ function getSlaBadgeClass(task: any) {
                 v-if="task.isDelegate"
                 class="badge bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-semibold"
               >
-                Mewakili Delegasi
+                {{ locale === 'en' ? 'Delegated' : 'Mewakili Delegasi' }}
               </span>
 
               <span class="text-[11px] font-mono text-slate-400">
@@ -235,7 +237,7 @@ function getSlaBadgeClass(task: any) {
               :color="task.leaveType.color"
             />
             <p class="text-xs font-semibold text-blue-700 mt-1.5 tabular-nums">
-              {{ task.workingDays }} hari kerja
+              {{ task.workingDays }} {{ t('requests.workingDays').toLowerCase() }}
             </p>
           </div>
         </div>
@@ -249,13 +251,13 @@ function getSlaBadgeClass(task: any) {
             <span class="font-medium">
               {{ dayjs(task.startDate).format('D MMM YYYY') }}
               <template v-if="task.startDate !== task.endDate">
-                s.d. {{ dayjs(task.endDate).format('D MMM YYYY') }}
+                – {{ dayjs(task.endDate).format('D MMM YYYY') }}
               </template>
             </span>
           </div>
 
           <div class="flex items-center gap-1 text-blue-700 font-semibold text-xs sm:ml-auto">
-            <span>Tinjau</span>
+            <span>{{ locale === 'en' ? 'Review' : 'Tinjau' }}</span>
           </div>
         </div>
 
@@ -267,4 +269,3 @@ function getSlaBadgeClass(task: any) {
     </div>
   </div>
 </template>
-

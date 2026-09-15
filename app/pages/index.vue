@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 
-useHead({
-  title: 'Beranda · Sistem Perizinan Pegawai',
-})
-
+const { t, formatDate, locale } = useI18n()
 const { user, can, hasRole } = useAuth()
 
+useHead({
+  title: computed(() => `${t('nav.home')} · ${t('nav.brandSubtitle')}`),
+})
+
 // 1. Data status sistem
-const { data: healthRes, refresh: refreshHealth } = await useFetch<{
+const { data: healthRes } = await useFetch<{
   data: { database: string; waktu: string; pegawai: number; jenis_izin: number }
 }>('/api/health')
 
@@ -40,9 +41,8 @@ const recentRequests = computed(() => {
 })
 
 const todayFormatted = computed(() => {
-  return dayjs().format('dddd, D MMMM YYYY')
+  return formatDate(new Date(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 })
-
 </script>
 
 <template>
@@ -58,14 +58,14 @@ const todayFormatted = computed(() => {
             <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>{{ todayFormatted }}</span>
             <span>·</span>
-            <span>Jam Operasional Aktif</span>
+            <span>AutoLeave</span>
           </div>
 
           <h1 class="text-2xl sm:text-3xl font-black tracking-tight">
-            Selamat datang, {{ user?.fullName || user?.username || 'Pegawai' }}! 👋
+            {{ t('home.greeting') }}, {{ user?.fullName || user?.username || 'Pegawai' }}! 👋
           </h1>
           <p class="text-xs sm:text-sm text-brand-100/90 max-w-xl leading-relaxed">
-            Portal manajemen perizinan terintegrasi dengan mesin aturan otomatis (*rule engine*) dan alur persetujuan bertingkat.
+            {{ t('auth.signInSubtitle') }}
           </p>
         </div>
 
@@ -78,7 +78,7 @@ const todayFormatted = computed(() => {
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
             </svg>
-            Ajukan Izin Baru
+            {{ t('home.applyLeave') }}
           </NuxtLink>
 
           <NuxtLink
@@ -89,7 +89,7 @@ const todayFormatted = computed(() => {
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
-            Kotak Masuk
+            {{ t('home.viewApproval') }}
             <span v-if="pendingApprovalCount > 0" class="badge bg-amber-400 text-amber-950 font-black text-[10px] px-1.5 py-0.2">
               {{ pendingApprovalCount }}
             </span>
@@ -100,7 +100,7 @@ const todayFormatted = computed(() => {
             to="/admin"
             class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/20 border border-white/30 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-white/30 active:scale-[0.98] transition backdrop-blur-xs"
           >
-            Panel Admin
+            {{ t('nav.admin') }}
           </NuxtLink>
         </div>
       </div>
@@ -111,12 +111,12 @@ const todayFormatted = computed(() => {
       <!-- Status Server & DB -->
       <div class="card p-4 sm:p-5 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500">Status Server</span>
+          <span class="text-xs font-semibold text-slate-500">Database</span>
           <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
         </div>
         <div class="mt-3">
           <p class="text-xl sm:text-2xl font-black text-slate-900">
-            {{ health?.database === 'ok' ? 'Terhubung' : 'Memeriksa' }}
+            {{ health?.database === 'ok' ? (locale === 'id' ? 'Terhubung' : 'Connected') : (locale === 'id' ? 'Memeriksa' : 'Checking') }}
           </p>
           <p class="text-[11px] text-slate-400 mt-0.5">PostgreSQL 16 · Online</p>
         </div>
@@ -125,7 +125,7 @@ const todayFormatted = computed(() => {
       <!-- Pegawai Terdaftar -->
       <div class="card p-4 sm:p-5 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500">Total Pegawai</span>
+          <span class="text-xs font-semibold text-slate-500">{{ locale === 'id' ? 'Total Pegawai' : 'Total Employees' }}</span>
           <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -136,14 +136,14 @@ const todayFormatted = computed(() => {
           <p class="text-xl sm:text-2xl font-black text-slate-900">
             {{ health?.pegawai ?? 10 }}
           </p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Karyawan aktif</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">{{ locale === 'id' ? 'Karyawan aktif' : 'Active employees' }}</p>
         </div>
       </div>
 
       <!-- Jenis Izin & Kebijakan -->
       <div class="card p-4 sm:p-5 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500">Jenis Perizinan</span>
+          <span class="text-xs font-semibold text-slate-500">{{ t('requests.leaveType') }}</span>
           <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -161,7 +161,7 @@ const todayFormatted = computed(() => {
       <!-- Tugas Approval Menunggu -->
       <div class="card p-4 sm:p-5 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-500">Tugas Approval</span>
+          <span class="text-xs font-semibold text-slate-500">{{ t('approval.pendingTasks') }}</span>
           <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -172,7 +172,7 @@ const todayFormatted = computed(() => {
           <p class="text-xl sm:text-2xl font-black text-slate-900">
             {{ pendingApprovalCount }}
           </p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Menunggu persetujuan</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">{{ t('home.pendingApprovals') }}</p>
         </div>
       </div>
     </div>
@@ -181,7 +181,7 @@ const todayFormatted = computed(() => {
     <div class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-          Pusat Menu & Fitur Sistem
+          {{ t('home.quickAction') }}
         </h2>
       </div>
 
@@ -197,13 +197,12 @@ const todayFormatted = computed(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span class="badge bg-brand-50 text-brand-700 text-xs font-bold">Mandiri</span>
           </div>
           <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Pengajuan Izin & Cuti Baru
+            {{ t('requests.newRequest') }}
           </h3>
           <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Formulir permohonan izin dengan kalkulasi hari otomatis dan validasi langsung oleh 20 mesin aturan.
+            {{ t('requests.submitConfirmMsg') }}
           </p>
         </NuxtLink>
 
@@ -218,13 +217,12 @@ const todayFormatted = computed(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            <span class="badge bg-slate-100 text-slate-700 text-xs font-bold">Status</span>
           </div>
           <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Daftar Permohonan Saya
+            {{ t('requests.myRequests') }}
           </h3>
           <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Pantau status persetujuan, tahapan alur yang sedang berjalan, dan riwayat cuti yang telah disetujui.
+            {{ t('home.viewAllRequests') }}
           </p>
         </NuxtLink>
 
@@ -240,80 +238,14 @@ const todayFormatted = computed(() => {
               </svg>
             </div>
             <span v-if="pendingApprovalCount > 0" class="badge bg-amber-100 text-amber-900 font-bold text-xs">
-              {{ pendingApprovalCount }} Menunggu
+              {{ pendingApprovalCount }}
             </span>
-            <span v-else class="badge bg-emerald-50 text-emerald-700 font-bold text-xs">Selesai</span>
           </div>
           <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Kotak Masuk Persetujuan
+            {{ t('approval.approvalInbox') }}
           </h3>
           <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Tinjau detail permohonan staf, evaluasi matriks aturan, dan setujui atau tolak izin secara cepat.
-          </p>
-        </NuxtLink>
-
-        <!-- Menu 4: Delegasi Wewenang -->
-        <NuxtLink
-          to="/approval/delegasi"
-          class="card p-5 block hover:border-brand-500 hover:shadow-md transition-all active:scale-[0.99] group"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-            </div>
-            <span class="badge bg-purple-50 text-purple-700 text-xs font-bold">Wewenang</span>
-          </div>
-          <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Delegasi Wewenang
-          </h3>
-          <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Limpahkan hak persetujuan kepada rekan sejawat selama Anda bepergian, dinas luar, atau cuti.
-          </p>
-        </NuxtLink>
-
-        <!-- Menu 5: Alur Persetujuan Bertingkat (Admin) -->
-        <NuxtLink
-          v-if="hasRole('ADMIN')"
-          to="/admin/alur"
-          class="card p-5 block hover:border-brand-500 hover:shadow-md transition-all active:scale-[0.99] group"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <span class="badge bg-blue-50 text-blue-700 text-xs font-bold">Admin</span>
-          </div>
-          <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Alur Approval Bertingkat
-          </h3>
-          <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Workflow builder multi-tahap, mode ANY_ONE, ALL, QUORUM, dan simulator live approver.
-          </p>
-        </NuxtLink>
-
-        <!-- Menu 6: Mesin Aturan & Kebijakan (Admin) -->
-        <NuxtLink
-          v-if="hasRole('ADMIN')"
-          to="/admin/aturan"
-          class="card p-5 block hover:border-brand-500 hover:shadow-md transition-all active:scale-[0.99] group"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </div>
-            <span class="badge bg-amber-50 text-amber-700 text-xs font-bold">Kebijakan</span>
-          </div>
-          <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-brand-600 transition">
-            Mesin Aturan & Kebijakan
-          </h3>
-          <p class="mt-1 text-xs text-slate-500 leading-relaxed">
-            Konfigurasi 20 parameter aturan dinamis, versi kebijakan, dan simulator dry-run evaluasi.
+            {{ t('approval.rulesEvaluation') }}
           </p>
         </NuxtLink>
       </div>
@@ -323,10 +255,10 @@ const todayFormatted = computed(() => {
     <div v-if="recentRequests.length > 0" class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-          Pengajuan Izin Terakhir Anda
+          {{ t('home.recentRequests') }}
         </h2>
         <NuxtLink to="/pengajuan" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
-          Lihat Semua
+          {{ t('home.viewAllRequests') }}
           <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
@@ -345,11 +277,11 @@ const todayFormatted = computed(() => {
               <StatusBadge :status="req.status" size="sm" />
             </div>
             <h4 class="text-sm font-bold text-slate-900 truncate">
-              {{ req.leaveTypeName || 'Izin Pegawai' }}
+              {{ req.leaveTypeName || t('requests.leaveType') }}
             </h4>
             <p class="text-xs text-slate-500 tabular-nums">
-              {{ dayjs(req.startDate).format('D MMM YYYY') }} s.d. {{ dayjs(req.endDate).format('D MMM YYYY') }}
-              · {{ req.workingDays }} hari kerja
+              {{ dayjs(req.startDate).format('D MMM YYYY') }} – {{ dayjs(req.endDate).format('D MMM YYYY') }}
+              · {{ req.workingDays }} {{ t('requests.workingDays').toLowerCase() }}
             </p>
           </div>
 
@@ -357,11 +289,10 @@ const todayFormatted = computed(() => {
             :to="`/pengajuan/${req.id}`"
             class="btn-ghost text-xs px-3 py-1.5 shrink-0"
           >
-            Detail
+            {{ t('common.viewDetails') }}
           </NuxtLink>
         </div>
       </div>
-
     </div>
   </div>
 </template>

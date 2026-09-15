@@ -193,13 +193,72 @@ export const TIMELINE_ACTIONS: Record<string, ActionDefinition> = {
 }
 
 /**
- * Memformat kalimat judul lini masa dalam bahasa Indonesia alami.
+ * Memformat kalimat judul lini masa dalam bahasa Indonesia atau Inggris.
  */
-export function formatTimelineTitle(entry: TimelineEntry): string {
+export function formatTimelineTitle(entry: TimelineEntry, locale: 'id' | 'en' = 'id'): string {
   const meta = entry.metadata || {}
-  const actor = entry.actorName || 'Sistem'
-  const step = entry.stepName ? `"${entry.stepName}"` : 'tahap persetujuan'
+  const actor = entry.actorName || (locale === 'en' ? 'System' : 'Sistem')
+  const step = entry.stepName ? `"${entry.stepName}"` : (locale === 'en' ? 'approval stage' : 'tahap persetujuan')
 
+  if (locale === 'en') {
+    switch (entry.action) {
+      case 'CREATED':
+        return 'Leave request draft created'
+      case 'SUBMITTED':
+        return `Request submitted by ${actor}`
+      case 'RULE_CHECKED': {
+        const passed = meta.passedCount ?? meta.passed_count ?? 0
+        const failed = meta.failedCount ?? meta.failed_count ?? 0
+        return `Rule evaluation: ${passed} passed, ${failed} failed`
+      }
+      case 'ASSIGNED': {
+        const assignees = meta.assigneeNames || meta.approver_name || meta.assignees || actor
+        return `Routed to ${step}: ${assignees}`
+      }
+      case 'VIEWED':
+        return `Opened and reviewed by ${actor}`
+      case 'REMINDER_SENT': {
+        const n = meta.reminderCount ?? meta.reminder_count ?? 1
+        const target = meta.targetName ?? meta.recipient_name ?? actor
+        return `Reminder #${n} sent to ${target}`
+      }
+      case 'APPROVED':
+        return `Approved by ${actor} (${entry.stepName || 'Approval'})`
+      case 'REJECTED':
+        return `Rejected by ${actor} (${entry.stepName || 'Approval'})`
+      case 'AUTO_APPROVED':
+        return 'Automatically approved by system'
+      case 'AUTO_REJECTED':
+        return 'Automatically rejected by system'
+      case 'ESCALATED':
+        return `Deadline for ${step} exceeded, escalated`
+      case 'DELEGATED': {
+        const from = meta.fromName || meta.delegator_name || 'Approver'
+        const to = meta.toName || meta.delegate_name || actor
+        return `Delegated from ${from} to ${to}`
+      }
+      case 'REASSIGNED': {
+        const newApprover = meta.newApproverName || meta.target_name || 'New Approver'
+        return `Approver for ${step} reassigned to ${newApprover} by Administrator`
+      }
+      case 'EXTENDED': {
+        const hours = meta.addedHours || meta.hours || 'additional'
+        return `SLA deadline for ${step} extended (+${hours} hrs) by Administrator`
+      }
+      case 'REOPENED':
+        return `Request reopened by Administrator at stage ${step}`
+      case 'CANCELLED':
+        return `Cancelled by ${actor}`
+      case 'EXPIRED':
+        return 'Request expired without final decision'
+      case 'ADMIN_OVERRIDE':
+        return `Decided via Administrator intervention (${actor})`
+      default:
+        return entry.action
+    }
+  }
+
+  // Bahasa Indonesia (default)
   switch (entry.action) {
     case 'CREATED':
       return 'Draf perizinan dibuat'

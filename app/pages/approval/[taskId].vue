@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const taskId = computed(() => route.params.taskId as string)
@@ -26,8 +27,8 @@ const timelineData = computed(() => timelineRes.value?.data)
 useHead({
   title: computed(() =>
     req.value
-      ? `Persetujuan #${req.value.requestNumber} - ${req.value.requester.fullName}`
-      : 'Detail Persetujuan'
+      ? `${t('approval.taskDetail')} #${req.value.requestNumber} - ${req.value.requester.fullName}`
+      : t('approval.taskDetail')
   ),
 })
 
@@ -332,22 +333,21 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
         @click="openRejectModal"
       >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
-        <span>Tolak</span>
+        <span>{{ locale === 'en' ? 'Reject' : 'Tolak' }}</span>
       </button>
 
-      <!-- Tombol Setujui -->
       <button
         type="button"
-        class="btn-primary flex-2 font-bold text-sm"
+        class="btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex-1 py-3 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition"
         :disabled="isSubmitting"
         @click="openApproveModal"
       >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <span>Setujui</span>
+        <span>{{ locale === 'en' ? 'Approve' : 'Setujui' }}</span>
       </button>
     </AppStickyActions>
 
@@ -463,7 +463,7 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
             :disabled="isSubmitting"
             @click="showApproveModal = false"
           >
-            Batal
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -472,7 +472,7 @@ async function submitAction(action: 'APPROVE' | 'REJECT') {
             @click="submitAction('APPROVE')"
           >
             <span v-if="isSubmitting" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-r-transparent mr-1"></span>
-            Ya, Setujui
+            {{ locale === 'en' ? 'Yes, Approve' : 'Ya, Setujui' }}
           </button>
         </div>
       </div>
