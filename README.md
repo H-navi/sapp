@@ -1,23 +1,28 @@
-# SAPP — Sistem Auto Approval Perizinan Pegawai
+# SAPP (AutoLeave) — Sistem Auto Approval Perizinan Pegawai
 
-SAPP (Sistem Auto Approval Perizinan Pegawai) adalah aplikasi modern berbasis web yang dirancang untuk mengelola perizinan dan cuti pegawai secara otomatis, terstruktur, dan transparan. Aplikasi ini dilengkapi dengan mesin aturan kebijakan (*policy rule engine*), alur persetujuan bertingkat (*multi-step workflow approval*), pemantauan SLA otomatis, dan manajemen master data berbasis peran (RBAC).
+> 🌐 **Bahasa / Language:** [🇮🇩 Bahasa Indonesia](README.md) · [🇬🇧 English](README.en.md)
+
+SAPP (*AutoLeave*) adalah aplikasi modern berbasis web yang dirancang untuk mengelola perizinan, cuti, dan kehadiran kerja jarak jauh (WFA) pegawai secara otomatis, terstruktur, dan transparan. Aplikasi ini dilengkapi dengan mesin aturan kebijakan (*policy rule engine*), alur persetujuan bertingkat (*multi-step workflow approval*), pemantauan SLA otomatis dengan eskalasi, notifikasi multi-kanal (Email SMTP & Telegram Bot), dukungan dwibahasa (Bahasa Indonesia & English), serta manajemen master data berbasis peran (RBAC).
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Framework:** [Nuxt 4](https://nuxt.com/) (Vue 3, Nitro Engine)
-* **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (Mobile-First responsive, 360px viewport optimized)
-* **Interaktivitas:** [Alpine.js](https://alpinejs.dev/) & Vue Composition API
+* **Framework:** [Nuxt 4](https://nuxt.com/) (Vue 3.5+, Nitro Engine, Island Components)
+* **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (Mobile-First, Ergonomi Satu Tangan / Thumb Zone, Kontras Aksesibilitas WCAG AAA)
+* **Interaktivitas:** [Alpine.js](https://alpinejs.dev/) & Vue 3 Composition API
 * **Database & ORM:** [PostgreSQL 16](https://www.postgresql.org/) & [Drizzle ORM](https://orm.drizzle.team/)
-* **Keamanan:** Autentikasi sesi *opaque* berbasis cookie HttpOnly, enkripsi password Bcrypt cost-12, mitigasi *brute-force* otomatis.
+* **Internasionalisasi (i18n):** Composable `useI18n` kustom dengan SSR cookie persistence dan kamus bertipe kuat (*strongly typed*).
+* **Notifikasi:** [Nodemailer](https://nodemailer.com/) (Gmail SMTP / Mailtrap) & Telegram Bot API.
+* **Testing & Kualitas:** [Vitest 5](https://vitest.dev/) (29 test suites, 153 tests passing 100%) & `vue-tsc` typecheck (0 error).
+* **Keamanan:** Autentikasi sesi *opaque* berbasis cookie HttpOnly, enkripsi password Bcrypt cost-12, mitigasi *brute-force* otomatis, dan *cycle detection* hierarki atasan.
 
 ---
 
 ## 🚀 Panduan Instalasi & Menjalankan Aplikasi
 
 ### 1. Prasyarat Sistem
-* **Node.js**: Versi 20 atau lebih baru (disarankan v24 LTS).
+* **Node.js**: Versi 20 atau lebih baru (disarankan v22/v24 LTS).
 * **Podman** atau **Docker** untuk menjalankan basis data PostgreSQL.
 
 ### 2. Menjalankan Database PostgreSQL (Podman / Docker)
@@ -63,9 +68,20 @@ NUXT_PUBLIC_APP_NAME=Sistem Perizinan Pegawai
 NUXT_PUBLIC_BASE_URL=http://localhost:3000
 NUXT_SESSION_SECRET=CdW561Oyj/RBp6cZ/XFWbXiX6u1CHQ+gWNAvtz0if9x1LcgygAyKlO8PuanjQREy
 TZ=Asia/Jakarta
+
+# --- Notifikasi Email SMTP (Opsional) ---
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=notifikasi@perusahaan.co.id
+SMTP_PASSWORD=your_app_password
+SMTP_FROM="Sistem Perizinan Pegawai <notifikasi@perusahaan.co.id>"
+
+# --- Notifikasi Telegram Bot (Opsional) ---
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+TELEGRAM_BOT_USERNAME=your_bot_username
 ```
 
-> **Catatan Port Windows/WSL2:** Jika port default `5432` terblokir oleh reservasi soket Windows Hyper-V, port tunneling `5433` digunakan untuk menghubungkan host ke container database.
+> **Catatan Port Windows/WSL2:** Jika port default `5432` terblokir oleh reservasi soket Windows Hyper-V, gunakan port tunneling `5433` untuk menghubungkan host ke container database.
 
 ### 4. Menjalankan Server Pengembangan
 
@@ -126,47 +142,67 @@ Hendra Wijaya (Direktur Utama)
 
 ---
 
-## 📱 Panduan Navigasi & Fitur Aplikasi
+## 📱 Panduan Navigasi & Fitur Utama
 
 Navigasi aplikasi mengusung konsep **Mobile-First Card Pattern**, sangat nyaman digunakan pada layar ponsel (360px) tanpa tabel yang meluber ke samping.
 
-### 1. Halaman Login (`/login`)
+### 1. Pilihan Bahasa (i18n)
+* Tombol pengganti bahasa `ID | EN` tersedia di **Header Navigasi Utama** dan di pojok kanan atas **Halaman Login**.
+* Tersedia kartu pengaturan bahasa di halaman **Profil (`/profil`)**.
+* Pilihan bahasa tersimpan otomatis di cookie peramban (`app_locale`) selama 1 tahun dan dirender langsung sejak transmisi HTML server (SSR).
+
+### 2. Halaman Login (`/login`)
 * Masukkan salah satu **Username** atau **Email** di atas beserta password default `Password123!`.
 * Dilengkapi proteksi *brute-force*: akun akan terkunci otomatis selama 15 menit jika salah memasukkan password sebanyak 5 kali berturut-turut.
 
-### 2. Halaman Ganti Password (`/ganti-password`)
+### 3. Halaman Ganti Password (`/ganti-password`)
 * Muncul otomatis saat login pertama kali jika akun memiliki tanda wajib ganti kata sandi.
 * Ketentuan kata sandi baru: minimal 8 karakter dan kombinasi huruf serta angka.
 
-### 3. Dasbor Admin (`/admin`) *(Hanya role ADMIN: `admin` & `joko`)*
-* **Kelola Pegawai (`/admin/pegawai`)**:
-  * Menampilkan daftar pegawai berbasis kartu, filter departemen & status, dan pencarian cepat.
-  * Tambah pegawai baru: sistem akan **otomatis membuatkan akun pengguna** dan memberikan kata sandi acak sementara yang dapat langsung disalin.
-  * Detail pegawai: ubah profil, atur hak akses/role pengguna, reset kata sandi, aktif/nonaktifkan hak pengajuan izin, dan nonaktifkan pegawai (dilengkapi validasi pencegahan jika masih ada tugas approval berstatus *pending*).
-  * Validasi anti-siklus (*manager cycle detection*): mencegah penyusunan atasan yang melingkar (misal A atasan B, B atasan A).
-* **Struktur Organisasi (`/admin/organisasi`)**:
-  * Kelola departemen dan unit kerja (termasuk kepala departemen).
-  * Kelola jenjang jabatan (*level* 1–10).
-* **Jenis Izin & Hak Pengajuan (`/admin/jenis-izin`)**:
-  * Daftar 6 jenis izin default (Cuti Tahunan, Sakit, Izin Tidak Masuk, Menikah, Melahirkan, WFA).
-  * Atur kuota tahunan, batas hari *backdate*, kewajiban lampiran, dan warna kartu.
-  * **Matriks Hak Pengajuan (Eligibility)**: Konfigurasi siapa yang berhak mengajukan (misal: WFA dilarang untuk status `PROBATION` & `CONTRACT`, namun dapat diberi pengecualian khusus untuk pegawai tertentu).
-* **Pengaturan Sistem (`/admin/pengaturan`)**:
-  * **Jam Kerja Mingguan**: Pengaturan jam kerja harian (Senin–Minggu), jam masuk, jam pulang, dan jam istirahat.
-  * **Kalender Hari Libur**: Penentuan libur nasional dan cuti bersama (dapat diset memotong kuota atau tidak).
-  * **Parameter Global**: Pengaturan SLA approval, reminder default, dan notifikasi.
+### 4. Pengajuan Izin (`/pengajuan/baru` & `/pengajuan`)
+* Formulir permohonan mandiri dengan kalkulasi otomatis hari kerja efektif.
+* Pra-validasi seketika oleh **20 mesin aturan** (kebijakan cuti, batasan kuota, bentrok jadwal, syarat lampiran).
+* Unggah berkas lampiran pendukung (surat dokter / dokumen bukti).
 
-### 4. Halaman Profil (`/profil`)
-* Menampilkan informasi data diri, daftar role yang dimiliki, tautan ganti kata sandi, dan tombol logout.
+### 5. Kotak Masuk Approval (`/approval` & `/approval/[taskId]`)
+* Menampilkan daftar tugas persetujuan: Semua, Mendesak (< 4 jam), Terlambat SLA, dan Delegasi.
+* Hitung mundur tenggat waktu SLA dinamis dengan penanda visual.
+* Evaluasi aturan alur: mode `ANY_ONE`, `ALL`, dan `QUORUM` (mis. butuh 2 dari 3 persetujuan).
+* Intervensi eskalasi dan persetujuan/penolakan otomatis jika batas SLA terlewati.
+
+### 6. Dasbor Laporan & Kalender Tim (`/laporan` & `/laporan/kalender`)
+* Rekapitulasi per jenis izin, departemen, dan saldo kuota pegawai.
+* Analisis performa approver (rata-rata respon dan SLA breach rate).
+* Kalender kehadiran tim gabungan dengan hari libur nasional.
+* Ekspor laporan ke CSV standar Excel (delimiter titik koma dengan UTF-8 BOM).
+
+### 7. Dasbor Admin (`/admin`) *(Hanya role ADMIN: `admin` & `joko`)*
+* **Pengawasan & Intervensi (`/admin/pengajuan`)**: Pemantauan langsung seluruh alur izin dan aksi intervensi admin (`REASSIGN`, `FORCE_APPROVE_STEP`, `FORCE_DECISION`, `EXTEND_DEADLINE`, `REOPEN`).
+* **Kelola Pegawai (`/admin/pegawai`)**: Pembuatan akun otomatis, manajemen role, reset sandi, dan deteksi siklus atasan.
+* **Struktur Organisasi (`/admin/organisasi`)**: Kelola departemen dan jenjang jabatan (Level 1–10).
+* **Jenis Izin & Aturan (`/admin/jenis-izin` & `/admin/aturan`)**: Pengaturan kuota, batas *backdate*, dan matriks kelayakan hak izin (*eligibility*).
+* **Alur Approval (`/admin/alur`)**: Workflow builder multi-tahap visual dengan simulator live.
+* **Template & Notifikasi (`/admin/notifikasi`)**: Editor template email & Telegram dengan pratinjau langsung dan tombol uji coba.
+* **Audit Log (`/admin/audit`)**: Pencatatan jejak aktivitas admin dan sistem dengan masking otomatis data rahasia.
 
 ---
 
-## 💻 Skrip Pengembangan yang Tersedia
+## 💻 Skrip Pengembangan & Pengujian
 
 | Perintah | Keterangan |
 |---|---|
 | `npm run dev` | Menjalankan server pengembangan Nuxt 4 lokal |
+| `npm run test` | Menjalankan seluruh pengujian otomatis Vitest (153 tests) |
+| `npx vue-tsc --noEmit` | Menjalankan validasi tipe TypeScript & Vue SFC |
 | `npm run build` | Melakukan build produksi Nitro & Nuxt |
-| `npm run typecheck` | Menjalankan validasi tipe TypeScript & Vue |
-| `npm run verify:db` | Memvalidasi integritas koneksi dan kelengkapan data database |
+| `npm run verify:db` | Memvalidasi integritas koneksi dan kelengkapan tabel database |
 | `npm run hash -- "<password>"` | Membuat hash Bcrypt cost-12 untuk kata sandi tertentu |
+
+---
+
+## 📖 Dokumentasi Tambahan
+
+* **[README English Version](README.en.md)**: English translation of this project guide.
+* **[Panduan Notifikasi Email & Telegram](TUTORIAL_NOTIFIKASI.md)**: Panduan konfigurasi Gmail SMTP dan BotFather Telegram (Bahasa Indonesia).
+* **[Notification Guide (English)](TUTORIAL_NOTIFIKASI.en.md)**: Step-by-step Email & Telegram setup guide (English).
+* **[Daftar Periksa Rilis (Release Checklist)](RELEASE_CHECKLIST.md)**: Skenario UAT, audit keamanan, dan prosedur deployment.

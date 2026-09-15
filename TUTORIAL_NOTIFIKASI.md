@@ -1,5 +1,7 @@
 # Panduan Implementasi & Konfigurasi Notifikasi (Email & Telegram)
 
+> 🌐 **Bahasa / Language:** [🇮🇩 Bahasa Indonesia](TUTORIAL_NOTIFIKASI.md) · [🇬🇧 English](TUTORIAL_NOTIFIKASI.en.md)
+
 Dokumen ini menjelaskan langkah demi langkah cara mengaktifkan dan menguji sistem notifikasi otomatis pada **Sistem Perizinan Pegawai**, baik melalui kanal **Email (Gmail SMTP)** maupun **Telegram Bot**.
 
 ---
